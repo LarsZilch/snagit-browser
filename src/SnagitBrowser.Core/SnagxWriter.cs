@@ -117,14 +117,45 @@ public static class SnagxWriter
         return ms.ToArray();
     }
 
-    /// <summary>Ersetzt im metadata.json-Text nur den Tags-Eintrag, im gleichen Format wie Snagit.</summary>
+    /// <summary>
+    /// Ersetzt im metadata.json-Text nur den Tags-Eintrag, im gleichen Format wie Snagit.
+    /// Nie getaggte Aufnahmen haben keinen Tags-Eintrag; dann wird er (alphabetisch einsortiert wie bei jsoncpp) eingefügt.
+    /// </summary>
     public static string ReplaceTags(string json, IReadOnlyList<string> tags)
     {
-        var matches = TagsRegex.Matches(json);
-        if (matches.Count != 1)
-            throw new InvalidDataException("Unbekanntes Format von metadata.json – Tags wurden nicht geändert.");
         var array = tags.Count == 0 ? "[]" : "[ " + string.Join(", ", tags.Select(JsonString)) + " ]";
-        return json[..matches[0].Index] + "\"Tags\" : " + array + json[(matches[0].Index + matches[0].Length)..];
+        var matches = TagsRegex.Matches(json);
+        if (matches.Count == 1)
+            return json[..matches[0].Index] + "\"Tags\" : " + array + json[(matches[0].Index + matches[0].Length)..];
+        if (matches.Count == 0)
+            return InsertTags(json, "\"Tags\" : " + array);
+        throw new InvalidDataException("Unbekanntes Format von metadata.json – Tags wurden nicht geändert.");
+    }
+
+    // Schlüssel der obersten Ebene im jsoncpp-Format: Zeilenumbruch + genau 3 Leerzeichen + "Name" :
+    private static readonly Regex TopLevelKeyRegex = new("(\\r?\\n) {3}\"([^\"\\\\]+)\"\\s*:", RegexOptions.CultureInvariant);
+    private static readonly Regex ClosingBraceRegex = new("(\\r?\\n)\\}\\s*$", RegexOptions.CultureInvariant);
+
+    private static string InsertTags(string json, string entry)
+    {
+        var keys = TopLevelKeyRegex.Matches(json);
+        if (keys.Count == 0)
+            throw new InvalidDataException("Unbekanntes Format von metadata.json – Tags wurden nicht geändert.");
+
+        // Vor dem ersten Schlüssel einfügen, der alphabetisch nach "Tags" kommt
+        var next = keys.FirstOrDefault(k => string.CompareOrdinal(k.Groups[2].Value, "Tags") > 0);
+        if (next != null)
+        {
+            var nl = next.Groups[1].Value;
+            return json[..next.Index] + nl + "   " + entry + "," + json[next.Index..];
+        }
+
+        // Sonst als letzten Eintrag vor der schließenden Klammer anhängen
+        var close = ClosingBraceRegex.Match(json);
+        if (!close.Success)
+            throw new InvalidDataException("Unbekanntes Format von metadata.json – Tags wurden nicht geändert.");
+        var newline = close.Groups[1].Value;
+        return json[..close.Index] + "," + newline + "   " + entry + json[close.Index..];
     }
 
     /// <summary>JSON-String wie jsoncpp: Umlaute bleiben UTF-8, nur Steuerzeichen/Quote/Backslash werden escaped.</summary>

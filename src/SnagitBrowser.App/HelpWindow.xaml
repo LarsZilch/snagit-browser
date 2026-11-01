@@ -1,0 +1,29 @@
+<Window x:Class="SnagitBrowser.App.HelpWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:SnagitBrowser.App"
+        Icon="pack://application:,,,/SnagitBrowser.App;component/app.ico" Width="860" Height="800" MinWidth="480" MinHeight="360"
+        WindowStartupLocation="CenterOwner" FontSize="13" UseLayoutRounding="True"
+        PreviewKeyDown="Window_PreviewKeyDown">
+    <Window.Resources>
+        <ResourceDictionary Source="Styles.xaml" />
+    </Window.Resources>
+
+    <DockPanel>
+        <!-- Kopf: Name und Version -->
+        <Border DockPanel.Dock="Top" Background="#F3F3F3" BorderBrush="#DDD" BorderThickness="0,0,0,1" Padding="18,12">
+            <DockPanel>
+                <Button DockPanel.Dock="Right" Click="Close_Click" VerticalAlignment="Center" Margin="0">
+                    <TextBlock Text="{local:L Common_Close}" />
+                </Button>
+                <Image Source="pack://application:,,,/SnagitBrowser.App;component/app.ico" Width="32" Height="32" Margin="0,0,12,0" />
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock x:Name="AppNameText" FontSize="20" FontWeight="SemiBold" />
+                    <TextBlock x:Name="VersionText" Foreground="#666" />
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <FlowDocumentScrollViewer x:Name="Viewer" VerticalScrollBarVisibility="Auto" IsToolBarVisible="False" Focusable="True" />
+    </DockPanel>
+</Window>

@@ -35,7 +35,19 @@ public partial class DetailWindow : Window
         foreach (var t in vm.AllTagNames()) _knownTags.Add(t);
         Loaded += (_, _) => Show(_pos);
         Closing += (_, e) => { if (!SavePendingTags()) e.Cancel = true; };
+        Loc.LanguageChanged += OnLanguageChanged;
+        Closed += (_, _) => Loc.LanguageChanged -= OnLanguageChanged;
     }
+
+    /// <summary>Im Code erzeugte Texte (Metadaten, Hinweis, Fehlertext) in der neuen Sprache anzeigen.</summary>
+    private void OnLanguageChanged(object? sender, EventArgs e)
+    {
+        if (_items.Count == 0) return;
+        if (_doc != null) { FillMetadata(); UpdateHint(); }
+        else if (_readError != null) TextsBox.Text = Loc.F("Detail_ReadError", Loc.Error(_readError));
+    }
+
+    private Exception? _readError;
 
     private CaptureItem Current => _items[_pos];
     private bool TagsDirty => _doc != null && !_editTags.SequenceEqual(_savedTags);
@@ -50,6 +62,7 @@ public partial class DetailWindow : Window
         var path = Current.Summary.Path;
         TagList.ItemsSource = null;
         NoTagsText.Visibility = Visibility.Visible;
+        _readError = null;
         try
         {
             _stamp = FileStamp.Of(path);
@@ -58,9 +71,10 @@ public partial class DetailWindow : Window
         catch (Exception ex)
         {
             _doc = null;
+            _readError = ex;
             _savedTags = []; _editTags = [];
             UpdateTagUi();
-            TextsBox.Text = "Datei konnte nicht gelesen werden: " + ex.Message;
+            TextsBox.Text = Loc.F("Detail_ReadError", Loc.Error(ex));
             ImageView.Source = null;
             MetaList.ItemsSource = null;
             return;
@@ -73,20 +87,7 @@ public partial class DetailWindow : Window
         foreach (var t in m.Tags) _knownTags.Add(t);
         NewTagBox.Text = "";
         UpdateTagUi();
-        MetaList.ItemsSource = new List<KeyValuePair<string, string>>
-        {
-            new("Datum", _doc.EffectiveDate.ToString("dd.MM.yyyy HH:mm:ss")),
-            new("Anwendung", m.AppName),
-            new("Hersteller", m.AppCompany),
-            new("Version", m.AppVersion),
-            new("Fenster", m.WindowName),
-            new("URL", m.WebUrl),
-            new("Größe", page == null ? "" : $"{page.Width} × {page.Height} px"),
-            new("Objekte", page == null ? "" : string.Join(", ", page.Objects.GroupBy(o => o.ToolMode).Select(g => $"{g.Count()}× {g.Key}"))),
-            new("Snagit", page?.SoftwareVersion ?? ""),
-            new("System", m.OperatingSystemVersion),
-            new("Datei", path),
-        }.Where(kv => !string.IsNullOrEmpty(kv.Value)).ToList();
+        FillMetadata();
 
         TextsBox.Text = string.Join("\n\n────────\n\n", _doc.Texts);
 
@@ -102,6 +103,27 @@ public partial class DetailWindow : Window
 
     private bool _hasAnnotations;
 
+    private void FillMetadata()
+    {
+        if (_doc == null) return;
+        var m = _doc.Metadata;
+        var page = _doc.Pages.FirstOrDefault();
+        MetaList.ItemsSource = new List<KeyValuePair<string, string>>
+        {
+            new(Loc.T("Meta_Date"), _doc.EffectiveDate.ToString(Loc.T("Fmt_DateTime"), Loc.Culture)),
+            new(Loc.T("Meta_App"), m.AppName),
+            new(Loc.T("Meta_Company"), m.AppCompany),
+            new(Loc.T("Meta_Version"), m.AppVersion),
+            new(Loc.T("Meta_Window"), m.WindowName),
+            new(Loc.T("Meta_Url"), m.WebUrl),
+            new(Loc.T("Meta_Size"), page == null ? "" : $"{page.Width} × {page.Height} px"),
+            new(Loc.T("Meta_Objects"), page == null ? "" : string.Join(", ", page.Objects.GroupBy(o => o.ToolMode).Select(g => $"{g.Count()}× {g.Key}"))),
+            new(Loc.T("Meta_Snagit"), page?.SoftwareVersion ?? ""),
+            new(Loc.T("Meta_System"), m.OperatingSystemVersion),
+            new(Loc.T("Meta_File"), Current.Summary.Path),
+        }.Where(kv => !string.IsNullOrEmpty(kv.Value)).ToList();
+    }
+
     private void LoadImage()
     {
         var path = Current.Summary.Path;
@@ -114,18 +136,24 @@ public partial class DetailWindow : Window
         }
         catch { ImageView.Source = null; _imageBytes = null; }
 
+        UpdateHint();
+        ApplyFit();
+    }
+
+    /// <summary>Hinweis, wenn Snagit das Bild mit Annotationen verkleinert gespeichert hat.</summary>
+    private void UpdateHint()
+    {
+        bool original = !_hasAnnotations || OriginalToggle.IsChecked == true;
         var page = _doc?.Pages.FirstOrDefault();
         if (_hasAnnotations && ImageView.Source is BitmapSource b && page != null &&
             Math.Max(page.Width, page.Height) > Math.Max(b.PixelWidth, b.PixelHeight))
         {
             HintText.Text = original
-                ? $"Original in voller Auflösung ({page.Width} × {page.Height} px), ohne Annotationen."
-                : $"Bild mit Annotationen – von Snagit auf {b.PixelWidth} × {b.PixelHeight} px verkleinert gespeichert. " +
-                  $"„Original ohne Annotationen“ zeigt die volle Auflösung ({page.Width} × {page.Height} px).";
+                ? Loc.F("Detail_HintOriginal", page.Width, page.Height)
+                : Loc.F("Detail_HintReduced", b.PixelWidth, b.PixelHeight, page.Width, page.Height);
             HintBar.Visibility = Visibility.Visible;
         }
         else HintBar.Visibility = Visibility.Collapsed;
-        ApplyFit();
     }
 
     /// <summary>
@@ -280,6 +308,7 @@ public partial class DetailWindow : Window
     private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
     {
         if (e.Key == Key.S && Keyboard.Modifiers == ModifierKeys.Control) { SavePendingTags(); e.Handled = true; return; }
+        if (e.Key == Key.F1) { HelpWindow.ShowFor(this); e.Handled = true; return; }
         // Im Tag-Eingabefeld bleiben Pfeile, Pos1/Ende und Entf beim Textfeld
         if (e.OriginalSource == NewTagBox && e.Key != Key.Escape && Keyboard.Modifiers != ModifierKeys.Control) return;
         if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift) && e.OriginalSource is TextBox) return;
@@ -335,13 +364,13 @@ public partial class DetailWindow : Window
         if (_imageBytes == null) return;
         var dlg = new SaveFileDialog
         {
-            Filter = "PNG-Bild|*.png",
+            Filter = Loc.T("Detail_PngFilter"),
             FileName = Path.GetFileNameWithoutExtension(Current.Summary.Path) + (OriginalToggle.IsChecked == true ? "_original" : "") + ".png",
             InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
         };
         if (dlg.ShowDialog(this) != true) return;
         try { Exporter.WriteBytes(dlg.FileName, _imageBytes, _sourceRoot); }
-        catch (Exception ex) { MessageBox.Show(this, ex.Message, "Speichern", MessageBoxButton.OK, MessageBoxImage.Warning); }
+        catch (Exception ex) { MessageBox.Show(this, Loc.Error(ex), Loc.T("Detail_Save_Caption"), MessageBoxButton.OK, MessageBoxImage.Warning); }
     }
 
     private void CopyImage_Click(object sender, RoutedEventArgs e)
@@ -467,17 +496,15 @@ public partial class DetailWindow : Window
             _stamp = FileStamp.Of(path);
             _savedTags = _editTags.ToList();
             _vm.FileChanged(path);
-            _vm.Status = $"Tags gespeichert: {Path.GetFileName(path)}";
+            var name = Path.GetFileName(path);
+            _vm.SetStatus(() => Loc.F("Detail_TagsSaved", name));
             UpdateTagUi();
             return true;
         }
         catch (FileChangedException)
         {
-            MessageBox.Show(this,
-                "Die Datei wurde inzwischen von einem anderen Programm geändert (vermutlich Snagit).\n\n" +
-                "Deine Tag-Änderung wurde NICHT gespeichert, damit nichts überschrieben wird. " +
-                "Die Datei wird neu geladen – bitte die Tags danach erneut setzen.",
-                "Tags speichern", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show(this, Loc.T("Detail_FileChanged"),
+                Loc.T("Detail_SaveTags_Caption"), MessageBoxButton.OK, MessageBoxImage.Warning);
             _vm.FileChanged(path);
             var keep = _pos; _pos = -1; _savedTags = []; _editTags = [];
             Show(keep);
@@ -485,10 +512,8 @@ public partial class DetailWindow : Window
         }
         catch (Exception ex)
         {
-            var r = MessageBox.Show(this,
-                $"Tags konnten nicht gespeichert werden:\n{ex.Message}\n\nDie Datei ist unverändert.\n\n" +
-                "Änderung verwerfen und fortfahren?",
-                "Tags speichern", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            var r = MessageBox.Show(this, Loc.F("Detail_SaveFailed", Loc.Error(ex)),
+                Loc.T("Detail_SaveTags_Caption"), MessageBoxButton.YesNo, MessageBoxImage.Warning);
             if (r != MessageBoxResult.Yes) return false;
             _editTags = _savedTags.ToList();
             UpdateTagUi();

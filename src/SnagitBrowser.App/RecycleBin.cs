@@ -44,7 +44,7 @@ public static class RecycleBin
         int rc = SHFileOperation(ref op);
         var gone = paths.Where(p => !File.Exists(p)).ToList();
         if (rc != 0 && gone.Count == 0)
-            throw new IOException($"Löschen fehlgeschlagen (Fehlercode 0x{rc:X}). Ist die Datei in einem anderen Programm geöffnet?");
+            throw new IOException(Loc.F("Del_Failed", rc));
         return gone;
     }
 }

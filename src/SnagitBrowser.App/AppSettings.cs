@@ -14,6 +14,8 @@ public sealed class AppSettings
     public bool ShowTileTags { get; set; }
     /// <summary>Tag-Leiste unter der Suche aufgeklappt.</summary>
     public bool TagBarExpanded { get; set; } = true;
+    /// <summary>Sprache der Oberfläche: "de" (Standard) oder "en".</summary>
+    public string Language { get; set; } = Loc.German;
 
     private static string FilePath => Path.Combine(LibraryIndex.DefaultDataDir, "settings.json");
 

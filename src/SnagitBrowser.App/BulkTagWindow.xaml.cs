@@ -35,8 +35,8 @@ public partial class BulkTagWindow : Window
         _vm = vm;
         _paths = paths.ToList();
         foreach (var t in vm.AllTagNames()) _knownTags.Add(t);
-        HeaderText.Text = _paths.Count == 1 ? $"Tags für „{Path.GetFileName(_paths[0])}“" : $"Tags für {_paths.Count:N0} ausgewählte Captures";
-        SummaryText.Text = "Lese Tags …";
+        HeaderText.Text = _paths.Count == 1 ? Loc.F("Bulk_HeaderOne", Path.GetFileName(_paths[0])) : Loc.F("Bulk_HeaderMany", _paths.Count);
+        SummaryText.Text = Loc.T("Bulk_Reading");
         SetBusy(true);
         Loaded += async (_, _) => await LoadAsync();
         // Während des Schreibens nicht schließen
@@ -59,7 +59,7 @@ public partial class BulkTagWindow : Window
                     var stamp = FileStamp.Of(p);
                     list.Add((p, stamp, SnagxReader.Read(p).Metadata.Tags.ToList()));
                 }
-                catch (Exception ex) { lock (errors) errors.Add($"{Path.GetFileName(p)}: {ex.Message}"); }
+                catch (Exception ex) { lock (errors) errors.Add($"{Path.GetFileName(p)}: {Loc.Error(ex)}"); }
             }
             return list;
         });
@@ -69,8 +69,8 @@ public partial class BulkTagWindow : Window
             foreach (var t in tags) _knownTags.Add(t);
         }
         if (errors.Count > 0)
-            MessageBox.Show(this, "Diese Dateien können nicht gelesen werden und werden übersprungen:\n\n" + string.Join("\n", errors.Take(15)),
-                "Tags bearbeiten", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show(this, Loc.F("Bulk_Unreadable", string.Join("\n", errors.Take(15))),
+                Loc.T("Common_EditTags"), MessageBoxButton.OK, MessageBoxImage.Warning);
         SetBusy(false);
         UpdateUi();
         NewTagBox.Focus();
@@ -111,8 +111,8 @@ public partial class BulkTagWindow : Window
         var parts = new List<string>();
         if (_add.Count > 0) parts.Add($"+ {string.Join(", ", _addOrder.Where(_add.Contains))}");
         if (_remove.Count > 0) parts.Add($"− {string.Join(", ", _remove.OrderBy(t => t, TagOrder))}");
-        SummaryText.Text = parts.Count == 0 ? "Keine Änderungen"
-            : $"{string.Join("   ", parts)}\n{changedFiles:N0} von {total:N0} Dateien werden geändert";
+        SummaryText.Text = parts.Count == 0 ? Loc.T("Bulk_NoChanges")
+            : $"{string.Join("   ", parts)}\n{Loc.F("Bulk_FilesChanged", changedFiles, total)}";
         ApplyButton.IsEnabled = !_busy && changedFiles > 0;
     }
 
@@ -183,6 +183,7 @@ public partial class BulkTagWindow : Window
 
     private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
     {
+        if (e.Key == Key.F1) { HelpWindow.ShowFor(this); e.Handled = true; return; }
         if (e.Key == Key.Enter && Keyboard.Modifiers == ModifierKeys.Control && ApplyButton.IsEnabled)
         {
             Apply_Click(this, new RoutedEventArgs()); e.Handled = true;
@@ -208,7 +209,7 @@ public partial class BulkTagWindow : Window
         CancelButton.IsEnabled = false;
         var done = new List<string>();
         var errors = new List<string>();
-        var progress = new Progress<int>(n => SummaryText.Text = $"Schreibe … {n:N0} / {work.Count:N0}");
+        var progress = new Progress<int>(n => SummaryText.Text = Loc.F("Bulk_Writing", n, work.Count));
         await Task.Run(() =>
         {
             int n = 0;
@@ -221,21 +222,22 @@ public partial class BulkTagWindow : Window
                 }
                 catch (FileChangedException)
                 {
-                    errors.Add($"{Path.GetFileName(w.Path)}: inzwischen von einem anderen Programm geändert – übersprungen");
+                    errors.Add(Loc.F("Bulk_ChangedSkipped", Path.GetFileName(w.Path)));
                 }
-                catch (Exception ex) { errors.Add($"{Path.GetFileName(w.Path)}: {ex.Message}"); }
+                catch (Exception ex) { errors.Add($"{Path.GetFileName(w.Path)}: {Loc.Error(ex)}"); }
                 ((IProgress<int>)progress).Report(++n);
             }
         });
 
         _vm.FilesChanged(done);
-        _vm.Status = $"Tags bei {done.Count:N0} Captures gespeichert" + (errors.Count > 0 ? $", {errors.Count} übersprungen" : "");
+        int saved = done.Count, skipped = errors.Count;
+        _vm.SetStatus(() => Loc.F("Bulk_Saved", saved) + (skipped > 0 ? Loc.F("Bulk_SavedSkipped", skipped) : ""));
         if (errors.Count > 0)
         {
             MessageBox.Show(this,
-                $"{done.Count:N0} Dateien geändert. Diese Dateien wurden NICHT geändert:\n\n" + string.Join("\n", errors.Take(20)) +
-                (errors.Count > 20 ? $"\n… und {errors.Count - 20} weitere" : ""),
-                "Tags bearbeiten", MessageBoxButton.OK, MessageBoxImage.Warning);
+                Loc.F("Bulk_NotChanged", done.Count, string.Join("\n", errors.Take(20))) +
+                (errors.Count > 20 ? Loc.F("Bulk_More", errors.Count - 20) : ""),
+                Loc.T("Common_EditTags"), MessageBoxButton.OK, MessageBoxImage.Warning);
         }
         _busy = false;
         _writing = false;

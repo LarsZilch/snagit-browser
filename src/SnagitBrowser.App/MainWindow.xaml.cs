@@ -17,6 +17,7 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         DataContext = _vm;
+        Title = AppInfo.Title;
 
         _relayoutTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(150) };
         _relayoutTimer.Tick += (_, _) => { _relayoutTimer.Stop(); Relayout(keepPosition: true); };
@@ -133,6 +134,16 @@ public partial class MainWindow : Window
         }
     }
 
+    /// <summary>F1 öffnet die Hilfe – egal, welches Element den Fokus hat.</summary>
+    private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.F1) return;
+        HelpWindow.ShowFor(this);
+        e.Handled = true;
+    }
+
+    private void Help_Click(object sender, RoutedEventArgs e) => HelpWindow.ShowFor(this);
+
     // ---------- Aktionen ----------
 
     private void Open(CaptureItem item) =>
@@ -154,8 +165,8 @@ public partial class MainWindow : Window
         var paths = _vm.SelectedItems.Select(i => i.Summary.Path).ToList();
         if (paths.Count == 0)
         {
-            MessageBox.Show(this, "Bitte zuerst ein oder mehrere Bilder auswählen (Klick, Strg+Klick, Umschalt+Klick).",
-                "Tags bearbeiten", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(this, Loc.T("Main_SelectFirst"),
+                Loc.T("Common_EditTags"), MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
         new BulkTagWindow(_vm, paths) { Owner = this }.ShowDialog();

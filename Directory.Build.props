@@ -1,0 +1,7 @@
+<Project>
+  <!-- Zentrale Versionsnummer für alle Projekte. Die App liest sie zur Laufzeit aus der Assembly (AppInfo.VersionText). -->
+  <PropertyGroup>
+    <Version>1.0.0</Version>
+    <Product>Snagit Browser</Product>
+  </PropertyGroup>
+</Project>

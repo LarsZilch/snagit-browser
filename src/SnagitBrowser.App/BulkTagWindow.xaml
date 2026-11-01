@@ -1,7 +1,8 @@
 <Window x:Class="SnagitBrowser.App.BulkTagWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Tags bearbeiten" Icon="pack://application:,,,/SnagitBrowser.App;component/app.ico" Width="560" Height="600" MinWidth="420" MinHeight="420"
+        xmlns:local="clr-namespace:SnagitBrowser.App"
+        Title="{local:L Common_EditTags}" Icon="pack://application:,,,/SnagitBrowser.App;component/app.ico" Width="560" Height="600" MinWidth="420" MinHeight="420"
         WindowStartupLocation="CenterOwner" ShowInTaskbar="False" FontSize="13" UseLayoutRounding="True"
         PreviewKeyDown="Window_PreviewKeyDown">
     <Window.Resources>
@@ -13,22 +14,22 @@
 
         <!-- Fußzeile: Zusammenfassung + Übernehmen/Abbrechen -->
         <DockPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
-            <Button x:Name="CancelButton" DockPanel.Dock="Right" Click="Cancel_Click" Margin="0" ToolTip="Nichts ändern (Esc)">
-                <TextBlock Text="Abbrechen" />
+            <Button x:Name="CancelButton" DockPanel.Dock="Right" Click="Cancel_Click" Margin="0" ToolTip="{local:L Bulk_Cancel_Tip}">
+                <TextBlock Text="{local:L Common_Cancel}" />
             </Button>
             <Button x:Name="ApplyButton" DockPanel.Dock="Right" Click="Apply_Click" BorderBrush="#1E88E5"
-                    ToolTip="Tags in alle ausgewählten .snagx-Dateien schreiben (Strg+Enter)">
+                    ToolTip="{local:L Bulk_Apply_Tip}">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Style="{StaticResource Icon}" Text="&#xE74E;" Foreground="#1565C0" />
-                    <TextBlock Text="Übernehmen" FontWeight="SemiBold" />
+                    <TextBlock Text="{local:L Bulk_Apply}" FontWeight="SemiBold" />
                 </StackPanel>
             </Button>
             <TextBlock x:Name="SummaryText" VerticalAlignment="Center" TextWrapping="Wrap" Foreground="#555" />
         </DockPanel>
 
-        <TextBlock DockPanel.Dock="Top" Text="Tags der Auswahl" Style="{StaticResource Heading}" />
+        <TextBlock DockPanel.Dock="Top" Text="{local:L Bulk_SelectionTags}" Style="{StaticResource Heading}" />
         <TextBlock DockPanel.Dock="Top" Foreground="#777" FontSize="12" Margin="0,0,0,6" TextWrapping="Wrap"
-                   Text="Hellblau mit Zahl = nur bei einem Teil der Bilder vorhanden. Klick auf den Namen setzt ihn bei allen, × entfernt ihn bei allen." />
+                   Text="{local:L Bulk_Explain}" />
         <ItemsControl x:Name="TagList" DockPanel.Dock="Top" Focusable="False">
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
@@ -39,7 +40,7 @@
                             Padding="10,3,4,3" Margin="0,0,6,6">
                         <StackPanel Orientation="Horizontal">
                             <Button Click="ChipName_Click" Tag="{Binding Name}" Padding="0" Margin="0" Background="Transparent"
-                                    BorderBrush="Transparent" ToolTip="Bei allen ausgewählten Bildern setzen">
+                                    BorderBrush="Transparent" ToolTip="{local:L Bulk_SetAll_Tip}">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE8EC;" FontSize="11" Foreground="#1565C0"
                                                VerticalAlignment="Center" Margin="0,0,5,0" />
@@ -47,7 +48,7 @@
                                     <TextBlock Text="{Binding CountText}" Foreground="#5C7FA8" FontSize="11" Margin="5,0,0,0" VerticalAlignment="Center" />
                                 </StackPanel>
                             </Button>
-                            <Button Click="ChipRemove_Click" Tag="{Binding Name}" ToolTip="Bei allen ausgewählten Bildern entfernen"
+                            <Button Click="ChipRemove_Click" Tag="{Binding Name}" ToolTip="{local:L Bulk_RemoveAll_Tip}"
                                     Padding="4,1" Margin="5,0,0,0" Background="Transparent" BorderBrush="Transparent">
                                 <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE711;" FontSize="9" Foreground="#1565C0" />
                             </Button>
@@ -63,23 +64,23 @@
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
         </ItemsControl>
-        <TextBlock x:Name="NoTagsText" DockPanel.Dock="Top" Text="Keine Tags vergeben" Foreground="#999" FontStyle="Italic" Margin="0,0,0,6" />
+        <TextBlock x:Name="NoTagsText" DockPanel.Dock="Top" Text="{local:L Tags_None}" Foreground="#999" FontStyle="Italic" Margin="0,0,0,6" />
 
         <DockPanel DockPanel.Dock="Top" Margin="0,6,0,6">
-            <Button DockPanel.Dock="Right" Click="AddTag_Click" Margin="6,0,0,0" ToolTip="Tag bei allen hinzufügen (Enter)">
-                <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Icon}" Text="&#xE710;" /><TextBlock Text="Hinzufügen" /></StackPanel>
+            <Button DockPanel.Dock="Right" Click="AddTag_Click" Margin="6,0,0,0" ToolTip="{local:L Bulk_Add_Tip}">
+                <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Icon}" Text="&#xE710;" /><TextBlock Text="{local:L Common_Add}" /></StackPanel>
             </Button>
             <Grid>
                 <TextBox x:Name="NewTagBox" Padding="4,3" VerticalContentAlignment="Center"
                          TextChanged="NewTagBox_TextChanged" KeyDown="NewTagBox_KeyDown"
-                         ToolTip="Neuen Tag eingeben oder vorhandene Tags filtern; Enter fügt hinzu" />
-                <TextBlock x:Name="NewTagPlaceholder" Text="Neuer Tag oder suchen …" Foreground="#999" Margin="7,0,0,0"
+                         ToolTip="{local:L Tags_NewTag_Tip}" />
+                <TextBlock x:Name="NewTagPlaceholder" Text="{local:L Tags_NewTag_Placeholder}" Foreground="#999" Margin="7,0,0,0"
                            VerticalAlignment="Center" IsHitTestVisible="False" />
             </Grid>
         </DockPanel>
 
         <TextBlock DockPanel.Dock="Top" Foreground="#666" Margin="0,2,0,4" FontSize="12"
-                   Text="Vorhandene Tags – Klick setzt bzw. entfernt bei allen ausgewählten Bildern:" />
+                   Text="{local:L Bulk_ExistingTags}" />
         <ScrollViewer VerticalScrollBarVisibility="Auto" Focusable="False">
             <ItemsControl x:Name="AllTagsList" Focusable="False">
                 <ItemsControl.ItemsPanel>

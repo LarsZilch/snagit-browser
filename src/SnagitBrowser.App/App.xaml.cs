@@ -17,6 +17,9 @@ public partial class App : Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
+        // Gespeicherte Sprache (Standard Deutsch) vor allen Texten setzen
+        Loc.SetLanguage(AppSettings.Load().Language);
+
         if (!TryAcquireSingleInstance())
         {
             SignalRunningInstance();
@@ -24,9 +27,10 @@ public partial class App : Application
             return;
         }
 
-        // Zahlen und Datumsangaben in Bindungen im deutschen Format (12.540 statt 12,540)
+        // Zahlen und Datumsangaben in Bindungen im Format der gewählten Sprache (de: 12.540, en: 12,540).
+        // Beim Umschalten setzt Loc.SetLanguage die Sprache der offenen Fenster neu.
         FrameworkElement.LanguageProperty.OverrideMetadata(typeof(FrameworkElement),
-            new FrameworkPropertyMetadata(XmlLanguage.GetLanguage(CultureInfo.GetCultureInfo("de-DE").IetfLanguageTag)));
+            new FrameworkPropertyMetadata(Loc.XmlLanguage));
         base.OnStartup(e);
 
         _activateEvent = new EventWaitHandle(false, EventResetMode.AutoReset, ActivateEventName);
@@ -75,7 +79,7 @@ public partial class App : Application
             if (EventWaitHandle.TryOpenExisting(ActivateEventName, out var ev))
                 using (ev) ev.Set();
             else
-                MessageBox.Show("SnagitBrowser läuft bereits auf diesem Rechner (in einer anderen Benutzersitzung).",
+                MessageBox.Show(Loc.T("App_AlreadyRunning"),
                     "SnagitBrowser", MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (UnauthorizedAccessException) { }

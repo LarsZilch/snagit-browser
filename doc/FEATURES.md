@@ -194,7 +194,13 @@ Alle Daten liegen unter `%LOCALAPPDATA%\SnagitBrowser\`:
 | `index-<hash>.db` | Suchindex pro Quellordner |
 | `Backups\` | Sicherungskopien vor Tag-Änderungen |
 
+**Sprache, Hilfe und Version:**
+- Die Oberfläche gibt es auf **Deutsch** (Standard) und **Englisch**. Umgeschaltet wird oben rechts; die Änderung wirkt sofort ohne Neustart und wird gespeichert. Auch Meldungen und Fehlermeldungen erscheinen in der gewählten Sprache.
+- **Hilfe** (Button oben rechts oder **F1**) öffnet eine Funktionsübersicht in der gewählten Sprache.
+- Die Versionsnummer steht im Fenstertitel (z. B. „Snagit Browser 1.0“) und in der Hilfe. Sie wird zentral in `Directory.Build.props` gepflegt.
+
 **Gespeicherte Einstellungen:**
+- Sprache der Oberfläche
 - Quellordner
 - Letzter Exportordner
 - Vor dem Löschen nachfragen
@@ -206,6 +212,7 @@ Alle Daten liegen unter `%LOCALAPPDATA%\SnagitBrowser\`:
 ### Galerie
 | Taste | Funktion |
 |---|---|
+| F1 | Hilfe (in allen Fenstern) |
 | Enter / Doppelklick | Detailansicht öffnen |
 | Pfeil links/rechts | Auswahl verschieben |
 | Strg + A | Alles auswählen |

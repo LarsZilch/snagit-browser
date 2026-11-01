@@ -1,6 +1,7 @@
 <Window x:Class="SnagitBrowser.App.DetailWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:SnagitBrowser.App"
         Title="Capture" Icon="pack://application:,,,/SnagitBrowser.App;component/app.ico" Height="850" Width="1300" WindowStartupLocation="CenterOwner" FontSize="13"
         UseLayoutRounding="True"
         PreviewKeyDown="Window_PreviewKeyDown">
@@ -12,45 +13,45 @@
         <!-- Button-Leiste -->
         <Border DockPanel.Dock="Top" Background="#F3F3F3" BorderBrush="#DDD" BorderThickness="0,0,0,1" Padding="8,6">
             <WrapPanel>
-                <Button x:Name="PrevButton" Click="Prev_Click" ToolTip="Vorheriges Bild (Pfeil links)">
-                    <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Icon}" Text="&#xE72B;" /><TextBlock Text="Zurück" /></StackPanel>
+                <Button x:Name="PrevButton" Click="Prev_Click" ToolTip="{local:L Detail_Prev_Tip}">
+                    <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Icon}" Text="&#xE72B;" /><TextBlock Text="{local:L Detail_Prev}" /></StackPanel>
                 </Button>
-                <Button x:Name="NextButton" Click="Next_Click" ToolTip="Nächstes Bild (Pfeil rechts)" Margin="0,0,16,0">
-                    <StackPanel Orientation="Horizontal"><TextBlock Text="Weiter" /><TextBlock Style="{StaticResource Icon}" Text="&#xE72A;" Margin="6,0,0,0" /></StackPanel>
+                <Button x:Name="NextButton" Click="Next_Click" ToolTip="{local:L Detail_Next_Tip}" Margin="0,0,16,0">
+                    <StackPanel Orientation="Horizontal"><TextBlock Text="{local:L Detail_Next}" /><TextBlock Style="{StaticResource Icon}" Text="&#xE72A;" Margin="6,0,0,0" /></StackPanel>
                 </Button>
 
-                <ToggleButton x:Name="OriginalToggle" Click="OriginalToggle_Click" ToolTip="Volle Auflösung ohne Annotationen anzeigen">
-                    <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Icon}" Text="&#xE91B;" /><TextBlock Text="Original" /></StackPanel>
+                <ToggleButton x:Name="OriginalToggle" Click="OriginalToggle_Click" ToolTip="{local:L Detail_Original_Tip}">
+                    <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Icon}" Text="&#xE91B;" /><TextBlock Text="{local:L Detail_Original}" /></StackPanel>
                 </ToggleButton>
-                <ToggleButton x:Name="FitToggle" IsChecked="True" Click="FitToggle_Click" ToolTip="Bild ins Fenster einpassen (Strg+0) / 100 %">
-                    <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Icon}" Text="&#xE9A6;" /><TextBlock Text="Einpassen" /></StackPanel>
+                <ToggleButton x:Name="FitToggle" IsChecked="True" Click="FitToggle_Click" ToolTip="{local:L Detail_Fit_Tip}">
+                    <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Icon}" Text="&#xE9A6;" /><TextBlock Text="{local:L Detail_Fit}" /></StackPanel>
                 </ToggleButton>
-                <Button Click="ZoomOut_Click" ToolTip="Verkleinern (Strg+Mausrad / Strg+Minus)" Padding="8,5">
+                <Button Click="ZoomOut_Click" ToolTip="{local:L Detail_ZoomOut_Tip}" Padding="8,5">
                     <TextBlock Style="{StaticResource Icon}" Text="&#xE71F;" Margin="0" />
                 </Button>
                 <TextBlock x:Name="ZoomText" Text="100 %" VerticalAlignment="Center" MinWidth="44" TextAlignment="Center"
                            Margin="0,0,6,0" Foreground="#444" />
-                <Button Click="ZoomIn_Click" ToolTip="Vergrößern (Strg+Mausrad / Strg+Plus)" Padding="8,5" Margin="0,0,16,0">
+                <Button Click="ZoomIn_Click" ToolTip="{local:L Detail_ZoomIn_Tip}" Padding="8,5" Margin="0,0,16,0">
                     <TextBlock Style="{StaticResource Icon}" Text="&#xE8A3;" Margin="0" />
                 </Button>
 
-                <Button Click="OpenInSnagit_Click" ToolTip="Diese Datei im Snagit Editor öffnen (Strg+E)">
-                    <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Icon}" Text="&#xE70F;" /><TextBlock Text="In Snagit öffnen" /></StackPanel>
+                <Button Click="OpenInSnagit_Click" ToolTip="{local:L Detail_OpenInSnagit_Tip}">
+                    <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Icon}" Text="&#xE70F;" /><TextBlock Text="{local:L Detail_OpenInSnagit}" /></StackPanel>
                 </Button>
-                <Button Click="SaveImage_Click" ToolTip="Bild als PNG-Datei speichern">
-                    <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Icon}" Text="&#xE74E;" /><TextBlock Text="Bild speichern …" /></StackPanel>
+                <Button Click="SaveImage_Click" ToolTip="{local:L Detail_SaveImage_Tip}">
+                    <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Icon}" Text="&#xE74E;" /><TextBlock Text="{local:L Detail_SaveImage}" /></StackPanel>
                 </Button>
-                <Button Click="CopyImage_Click" ToolTip="Bild in die Zwischenablage">
-                    <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Icon}" Text="&#xE8C8;" /><TextBlock Text="Bild kopieren" /></StackPanel>
+                <Button Click="CopyImage_Click" ToolTip="{local:L Detail_CopyImage_Tip}">
+                    <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Icon}" Text="&#xE8C8;" /><TextBlock Text="{local:L Detail_CopyImage}" /></StackPanel>
                 </Button>
-                <Button Click="CopyText_Click" ToolTip="Texte in die Zwischenablage">
-                    <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Icon}" Text="&#xE8D2;" /><TextBlock Text="Texte kopieren" /></StackPanel>
+                <Button Click="CopyText_Click" ToolTip="{local:L Detail_CopyTexts_Tip}">
+                    <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Icon}" Text="&#xE8D2;" /><TextBlock Text="{local:L Common_CopyTexts}" /></StackPanel>
                 </Button>
-                <Button Click="Explorer_Click" ToolTip="Datei im Windows-Explorer zeigen">
-                    <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Icon}" Text="&#xE838;" /><TextBlock Text="Im Explorer anzeigen" /></StackPanel>
+                <Button Click="Explorer_Click" ToolTip="{local:L Detail_Explorer_Tip}">
+                    <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Icon}" Text="&#xE838;" /><TextBlock Text="{local:L Common_ShowInExplorer}" /></StackPanel>
                 </Button>
-                <Button Click="Delete_Click" ToolTip="Capture in den Papierkorb verschieben (Entf)">
-                    <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Icon}" Text="&#xE74D;" Foreground="#C62828" /><TextBlock Text="Löschen" /></StackPanel>
+                <Button Click="Delete_Click" ToolTip="{local:L Detail_Delete_Tip}">
+                    <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Icon}" Text="&#xE74D;" Foreground="#C62828" /><TextBlock Text="{local:L Common_Delete}" /></StackPanel>
                 </Button>
             </WrapPanel>
         </Border>
@@ -80,7 +81,7 @@
 
             <DockPanel Grid.Column="2" Margin="12,10,10,10">
                 <!-- Tags ganz oben als Kacheln; Klick auf × entfernt den Tag -->
-                <TextBlock DockPanel.Dock="Top" Text="Tags" Style="{StaticResource Heading}" />
+                <TextBlock DockPanel.Dock="Top" Text="{local:L Detail_Tags}" Style="{StaticResource Heading}" />
                 <ItemsControl x:Name="TagList" DockPanel.Dock="Top" Focusable="False">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
@@ -93,7 +94,7 @@
                                     <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE8EC;" FontSize="11" Foreground="#1565C0"
                                                VerticalAlignment="Center" Margin="0,0,5,0" />
                                     <TextBlock Text="{Binding}" Foreground="#0D47A1" FontWeight="SemiBold" VerticalAlignment="Center" />
-                                    <Button Click="RemoveTag_Click" Tag="{Binding}" ToolTip="Tag entfernen" Padding="4,1" Margin="5,0,0,0"
+                                    <Button Click="RemoveTag_Click" Tag="{Binding}" ToolTip="{local:L Detail_RemoveTag_Tip}" Padding="4,1" Margin="5,0,0,0"
                                             Background="Transparent" BorderBrush="Transparent">
                                         <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE711;" FontSize="9" Foreground="#1565C0" />
                                     </Button>
@@ -102,43 +103,43 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-                <TextBlock x:Name="NoTagsText" DockPanel.Dock="Top" Text="Keine Tags vergeben" Foreground="#999"
+                <TextBlock x:Name="NoTagsText" DockPanel.Dock="Top" Text="{local:L Tags_None}" Foreground="#999"
                            FontStyle="Italic" Margin="0,0,0,6" />
 
                 <!-- Speichern / Verwerfen erscheinen nur bei ungespeicherten Änderungen -->
                 <Border x:Name="TagSaveBar" DockPanel.Dock="Top" Background="#FFF8E1" BorderBrush="#F0D88A" BorderThickness="1"
                         CornerRadius="5" Padding="8,6" Margin="0,0,0,8" Visibility="Collapsed">
                     <DockPanel>
-                        <Button DockPanel.Dock="Right" Click="DiscardTags_Click" Margin="0" ToolTip="Änderungen an den Tags verwerfen">
-                            <TextBlock Text="Verwerfen" />
+                        <Button DockPanel.Dock="Right" Click="DiscardTags_Click" Margin="0" ToolTip="{local:L Detail_Discard_Tip}">
+                            <TextBlock Text="{local:L Detail_Discard}" />
                         </Button>
                         <Button DockPanel.Dock="Right" Click="SaveTags_Click" BorderBrush="#1E88E5"
-                                ToolTip="Tags in die .snagx-Datei schreiben (Strg+S, auch automatisch beim Blättern/Schließen)">
+                                ToolTip="{local:L Detail_Save_Tip}">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Style="{StaticResource Icon}" Text="&#xE74E;" Foreground="#1565C0" />
-                                <TextBlock Text="Speichern" FontWeight="SemiBold" />
+                                <TextBlock Text="{local:L Detail_Save}" FontWeight="SemiBold" />
                             </StackPanel>
                         </Button>
-                        <TextBlock Text="Tags geändert" VerticalAlignment="Center" Foreground="#6D5300" />
+                        <TextBlock Text="{local:L Detail_TagsChanged}" VerticalAlignment="Center" Foreground="#6D5300" />
                     </DockPanel>
                 </Border>
 
                 <!-- Neuer Tag / Filter für die vorhandenen Tags -->
                 <DockPanel DockPanel.Dock="Top" Margin="0,0,0,6">
-                    <Button DockPanel.Dock="Right" Click="AddTag_Click" Margin="6,0,0,0" ToolTip="Tag hinzufügen (Enter)">
-                        <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Icon}" Text="&#xE710;" /><TextBlock Text="Hinzufügen" /></StackPanel>
+                    <Button DockPanel.Dock="Right" Click="AddTag_Click" Margin="6,0,0,0" ToolTip="{local:L Detail_Add_Tip}">
+                        <StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource Icon}" Text="&#xE710;" /><TextBlock Text="{local:L Common_Add}" /></StackPanel>
                     </Button>
                     <Grid>
                         <TextBox x:Name="NewTagBox" Padding="4,3" VerticalContentAlignment="Center"
                                  TextChanged="NewTagBox_TextChanged" KeyDown="NewTagBox_KeyDown"
-                                 ToolTip="Neuen Tag eingeben oder vorhandene Tags filtern; Enter fügt hinzu" />
-                        <TextBlock Text="Neuer Tag oder suchen …" Foreground="#999" Margin="7,0,0,0" VerticalAlignment="Center"
+                                 ToolTip="{local:L Tags_NewTag_Tip}" />
+                        <TextBlock Text="{local:L Tags_NewTag_Placeholder}" Foreground="#999" Margin="7,0,0,0" VerticalAlignment="Center"
                                    IsHitTestVisible="False" x:Name="NewTagPlaceholder" />
                     </Grid>
                 </DockPanel>
 
                 <TextBlock DockPanel.Dock="Top" Foreground="#666" Margin="0,2,0,4" FontSize="12"
-                           Text="Vorhandene Tags – Klick fügt hinzu bzw. entfernt:" />
+                           Text="{local:L Detail_ExistingTags}" />
                 <ScrollViewer DockPanel.Dock="Top" MaxHeight="170" VerticalScrollBarVisibility="Auto" Focusable="False">
                     <ItemsControl x:Name="AllTagsList" Focusable="False">
                         <ItemsControl.ItemsPanel>
@@ -153,7 +154,7 @@
                     </ItemsControl>
                 </ScrollViewer>
 
-                <TextBlock DockPanel.Dock="Top" Text="Metadaten" Style="{StaticResource Heading}" Margin="0,12,0,6" />
+                <TextBlock DockPanel.Dock="Top" Text="{local:L Detail_Metadata}" Style="{StaticResource Heading}" Margin="0,12,0,6" />
                 <ItemsControl x:Name="MetaList" DockPanel.Dock="Top" Focusable="False">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
@@ -169,7 +170,7 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-                <TextBlock DockPanel.Dock="Top" Text="Texte / Notizen" Style="{StaticResource Heading}" Margin="0,14,0,6" />
+                <TextBlock DockPanel.Dock="Top" Text="{local:L Detail_Texts}" Style="{StaticResource Heading}" Margin="0,14,0,6" />
                 <TextBox x:Name="TextsBox" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"
                          AcceptsReturn="True" FontSize="14" Padding="4" />
             </DockPanel>

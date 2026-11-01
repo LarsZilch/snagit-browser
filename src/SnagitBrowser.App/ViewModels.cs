@@ -42,13 +42,20 @@ public sealed partial class CaptureItem : ObservableObject
         SetBucket(ImageLoader.BucketFor(Math.Max(width, height) * dpiScale));
     }
     public string Title => string.IsNullOrEmpty(Summary.WindowName) ? Summary.FileName : Summary.WindowName;
-    public string DateText => Summary.Date.ToString("dd.MM.yyyy HH:mm");
+    public string DateText => Summary.Date.ToString(Loc.T("Fmt_Date"), Loc.Culture);
     public string TagsText => string.Join(", ", Summary.Tags);
     public bool HasText => Summary.Texts.Length > 0;
     public string ToolTip =>
         $"{Summary.FileName}\n{Summary.AppName}\n{Summary.WindowName}" +
-        (Summary.Tags.Count > 0 ? $"\nTags: {TagsText}" : "") +
+        (Summary.Tags.Count > 0 ? "\n" + Loc.F("Item_Tags", TagsText) : "") +
         (HasText ? $"\n\n{Shorten(Summary.Texts, 400)}" : "");
+
+    /// <summary>Nach dem Umschalten der Sprache: sprachabhängige Texte neu anzeigen.</summary>
+    public void RefreshTexts()
+    {
+        OnPropertyChanged(nameof(DateText));
+        OnPropertyChanged(nameof(ToolTip));
+    }
 
     private static string Shorten(string s, int n) => s.Length <= n ? s : s[..n] + " …";
 
@@ -118,6 +125,12 @@ public sealed record TagCountEntry(string Key, int? Min, int? Max, string Label)
     public override string ToString() => Label;
 }
 
+/// <summary>Eintrag der Sprachauswahl (Name immer in der eigenen Sprache).</summary>
+public sealed record LanguageOption(string Code, string Name)
+{
+    public override string ToString() => Name;
+}
+
 public enum DateLevel { All, Year, Month, Day }
 
 /// <summary>Knoten im Zeitraum-Baum (Alle → Jahr → Monat → Tag).</summary>
@@ -161,7 +174,47 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     {
         _debounce = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(300) };
         _debounce.Tick += (_, _) => { _debounce.Stop(); RefreshAll(); };
+        Loc.LanguageChanged += OnLanguageChanged;
     }
+
+    // ---------- Sprache ----------
+
+    public IReadOnlyList<LanguageOption> Languages { get; } =
+        [new(Loc.German, "Deutsch"), new(Loc.English, "English")];
+
+    /// <summary>Sprache der Oberfläche; wird gespeichert und wirkt sofort.</summary>
+    public string UiLanguage
+    {
+        get => Loc.Language;
+        set
+        {
+            value = Loc.Normalize(value);
+            if (value == Loc.Language) return;
+            _settings.Language = value;
+            _settings.Save();
+            Loc.SetLanguage(value);
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>Im Code erzeugte Texte (Filter, Zeitraum, Statuszeile, Kacheln) in der neuen Sprache neu aufbauen.</summary>
+    private void OnLanguageChanged(object? sender, EventArgs e)
+    {
+        LoadFilters();
+        BuildDateTree();
+        OnPropertyChanged(nameof(TagBarHeader));
+        UpdateSelectionText();
+        if (_statusSource != null) Status = _statusSource();
+        if (_resultSource != null) ResultText = _resultSource();
+        foreach (var item in Items) item.RefreshTexts();
+    }
+
+    private Func<string>? _statusSource, _resultSource;
+
+    /// <summary>Statusmeldung setzen; sie wird beim Umschalten der Sprache neu erzeugt.</summary>
+    public void SetStatus(Func<string> text) { _statusSource = text; Status = text(); }
+
+    private void SetResultText(Func<string> text) { _resultSource = text; ResultText = text(); }
 
     /// <summary>Alle Treffer in Reihenfolge.</summary>
     [ObservableProperty] private IReadOnlyList<CaptureItem> _items = [];
@@ -214,7 +267,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         set { if (_settings.TagBarExpanded == value) return; _settings.TagBarExpanded = value; _settings.Save(); OnPropertyChanged(); }
     }
 
-    public string TagBarHeader => SelectedTag?.Value is { } t ? $"Tag-Filter: {t}" : "Tag-Filter: keiner";
+    public string TagBarHeader => SelectedTag?.Value is { } t ? Loc.F("Main_TagBar_Header", t) : Loc.T("Main_TagBar_None");
 
     /// <summary>Klick auf einen Tag-Button: auswählen bzw. bei erneutem Klick wieder abwählen.</summary>
     public void ToggleTagFilter(string name)
@@ -341,7 +394,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     }
 
     private void UpdateSelectionText() =>
-        SelectionText = _selected.Count > 1 ? $"{_selected.Count:N0} ausgewählt" : "";
+        SelectionText = _selected.Count > 1 ? Loc.F("Vm_Selected", _selected.Count) : "";
 
     public async Task InitializeAsync()
     {
@@ -349,7 +402,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         try { SnagxWriter.CleanupBackups(days: 30); } catch { /* Sicherungen aufräumen ist optional */ }
         if (!Directory.Exists(_settings.SourceRoot))
         {
-            Status = $"Quellordner nicht gefunden: {_settings.SourceRoot}";
+            var root = _settings.SourceRoot;
+            SetStatus(() => Loc.F("Vm_SourceNotFound", root));
             return;
         }
         _index?.Dispose();
@@ -372,7 +426,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         var progress = new Progress<ScanProgress>(p =>
         {
             ScanPercent = p.Total == 0 ? 100 : 100.0 * p.Done / p.Total;
-            Status = $"Indexiere … {p.Done:N0} / {p.Total:N0}";
+            SetStatus(() => Loc.F("Vm_Indexing", p.Done, p.Total));
             if (firstBuild && (DateTime.Now - lastRefresh).TotalSeconds > 5)
             {
                 lastRefresh = DateTime.Now;
@@ -383,12 +437,12 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         {
             var index = _index;
             var r = await Task.Run(() => index.Scan(progress, _scanCts.Token));
-            Status = $"{r.Total:N0} Captures · neu {r.Added:N0}, geändert {r.Updated:N0}, entfernt {r.Removed:N0}" +
-                     (r.Errors > 0 ? $", {r.Errors} nicht lesbar" : "") + $" · {r.Duration.TotalSeconds:N1} s";
+            SetStatus(() => Loc.F("Vm_ScanDone", r.Total, r.Added, r.Updated, r.Removed) +
+                            (r.Errors > 0 ? Loc.F("Vm_ScanErrors", r.Errors) : "") + Loc.F("Vm_ScanDuration", r.Duration.TotalSeconds));
             if (r.Added + r.Updated + r.Removed > 0) { LoadFilters(); RefreshAll(); }
         }
-        catch (OperationCanceledException) { Status = "Indexierung abgebrochen"; }
-        catch (Exception ex) { Status = "Fehler beim Indexieren: " + ex.Message; }
+        catch (OperationCanceledException) { SetStatus(() => Loc.T("Vm_ScanCancelled")); }
+        catch (Exception ex) { SetStatus(() => Loc.F("Vm_ScanError", Loc.Error(ex))); }
         finally { IsScanning = false; ScanPercent = 0; }
     }
 
@@ -399,9 +453,9 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         _suppressRefresh = true;
         try
         {
-            Apps.Clear(); Apps.Add(new FilterEntry(null, "(alle Anwendungen)"));
+            Apps.Clear(); Apps.Add(new FilterEntry(null, Loc.T("Vm_AllApps")));
             foreach (var (n, c) in _index.GetApps()) Apps.Add(new FilterEntry(n, $"{n} ({c})"));
-            Tags.Clear(); Tags.Add(new FilterEntry(null, "(alle Tags)"));
+            Tags.Clear(); Tags.Add(new FilterEntry(null, Loc.T("Vm_AllTags")));
             var tagCounts = _index.GetTags();
             foreach (var (n, c) in tagCounts) Tags.Add(new FilterEntry(n, $"{n} ({c})"));
             TagButtons.Clear();
@@ -413,11 +467,11 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             var dist = _index.GetTagCountDistribution();
             int withTags = dist.Where(d => d.TagCount > 0).Sum(d => d.Captures);
             TagCounts.Clear();
-            TagCounts.Add(new TagCountEntry("any", null, null, "(beliebig viele)"));
-            TagCounts.Add(new TagCountEntry("0", null, 0, $"ohne Tags ({dist.FirstOrDefault(d => d.TagCount == 0).Captures:N0})"));
-            TagCounts.Add(new TagCountEntry("1+", 1, null, $"mindestens 1 Tag ({withTags:N0})"));
+            TagCounts.Add(new TagCountEntry("any", null, null, Loc.T("Vm_AnyTagCount")));
+            TagCounts.Add(new TagCountEntry("0", null, 0, Loc.F("Vm_NoTags", dist.FirstOrDefault(d => d.TagCount == 0).Captures)));
+            TagCounts.Add(new TagCountEntry("1+", 1, null, Loc.F("Vm_AtLeastOneTag", withTags)));
             foreach (var (n, c) in dist.Where(d => d.TagCount > 0))
-                TagCounts.Add(new TagCountEntry($"{n}", n, n, $"genau {n} {(n == 1 ? "Tag" : "Tags")} ({c:N0})"));
+                TagCounts.Add(new TagCountEntry($"{n}", n, n, n == 1 ? Loc.F("Vm_ExactlyOneTag", c) : Loc.F("Vm_ExactlyNTags", n, c)));
 
             SelectedApp = Apps.FirstOrDefault(a => a.Value == app) ?? Apps[0];
             SelectedTag = Tags.FirstOrDefault(t => t.Value == tag) ?? Tags[0];
@@ -456,9 +510,10 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             _anchorIndex = -1;
             UpdateSelectionText();
             Items = hits.Select((h, i) => new CaptureItem(h, i)).ToList();
-            ResultText = $"{hits.Count:N0} Treffer";
+            int count = hits.Count;
+            SetResultText(() => Loc.F("Vm_Hits", count));
         }
-        catch (Exception ex) { ResultText = "Suchfehler: " + ex.Message; }
+        catch (Exception ex) { SetResultText(() => Loc.F("Vm_SearchError", Loc.Error(ex))); }
     }
 
     private void BuildDateTree()
@@ -473,7 +528,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         bool firstBuild = !_treeHadYears;
         _treeHadYears |= days.Count > 0;
 
-        var all = new DateNode { Key = "all", Label = "Alle Captures", Level = DateLevel.All, Count = days.Sum(d => d.Count), IsExpanded = true };
+        var fmt = Loc.Culture.DateTimeFormat;
+        var all = new DateNode { Key = "all", Label = Loc.T("Vm_AllCaptures"), Level = DateLevel.All, Count = days.Sum(d => d.Count), IsExpanded = true };
         foreach (var year in days.GroupBy(d => d.Day.Year).OrderByDescending(g => g.Key))
         {
             var yNode = new DateNode
@@ -487,15 +543,15 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
                 var first = new DateTime(year.Key, month.Key, 1);
                 var mNode = new DateNode
                 {
-                    Key = $"{year.Key}-{month.Key:00}", Label = German.DateTimeFormat.GetMonthName(month.Key), Level = DateLevel.Month,
+                    Key = $"{year.Key}-{month.Key:00}", Label = fmt.GetMonthName(month.Key), Level = DateLevel.Month,
                     From = first, To = first.AddMonths(1).AddDays(-1), Count = month.Sum(d => d.Count),
                 };
                 foreach (var (day, count) in month.OrderByDescending(d => d.Day))
                 {
-                    var abbr = German.DateTimeFormat.GetAbbreviatedMonthName(day.Month).TrimEnd('.');
+                    var abbr = fmt.GetAbbreviatedMonthName(day.Month).TrimEnd('.');
                     mNode.Children.Add(new DateNode
                     {
-                        Key = day.ToString("yyyy-MM-dd"), Label = $"{day.Day}. {abbr}, {German.DateTimeFormat.GetDayName(day.DayOfWeek)}",
+                        Key = day.ToString("yyyy-MM-dd"), Label = Loc.F("Vm_DayLabel", day.Day, abbr, fmt.GetDayName(day.DayOfWeek)),
                         Level = DateLevel.Day, From = day, To = day, Count = count,
                     });
                 }
@@ -558,7 +614,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private async Task ChooseSourceAsync()
     {
-        var dlg = new OpenFolderDialog { Title = "Snagit-Bibliotheksordner wählen", InitialDirectory = _settings.SourceRoot };
+        var dlg = new OpenFolderDialog { Title = Loc.T("Vm_ChooseSource"), InitialDirectory = _settings.SourceRoot };
         if (dlg.ShowDialog() != true) return;
         _scanCts?.Cancel();
         _settings.SourceRoot = dlg.FolderName;
@@ -574,7 +630,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     private void Export(IList<CaptureItem> items, bool copySnagx)
     {
         if (items.Count == 0) return;
-        var dlg = new OpenFolderDialog { Title = copySnagx ? ".snagx-Dateien kopieren nach" : "Bilder exportieren nach" };
+        var dlg = new OpenFolderDialog { Title = Loc.T(copySnagx ? "Vm_CopyFilesTo" : "Vm_ExportImagesTo") };
         if (_settings.LastExportDir != null && Directory.Exists(_settings.LastExportDir)) dlg.InitialDirectory = _settings.LastExportDir;
         if (dlg.ShowDialog() != true) return;
         try
@@ -585,16 +641,17 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
                 : Exporter.ExportImages(files, dlg.FolderName, _settings.SourceRoot);
             _settings.LastExportDir = dlg.FolderName;
             _settings.Save();
-            Status = $"{n} Datei(en) nach {dlg.FolderName} exportiert";
+            var folder = dlg.FolderName;
+            SetStatus(() => Loc.F("Vm_Exported", n, folder));
         }
-        catch (Exception ex) { MessageBox.Show(ex.Message, "Export", MessageBoxButton.OK, MessageBoxImage.Warning); }
+        catch (Exception ex) { MessageBox.Show(Loc.Error(ex), Loc.T("Vm_Export_Caption"), MessageBoxButton.OK, MessageBoxImage.Warning); }
     }
 
     public void CopyTexts(IList<CaptureItem> items)
     {
         var text = string.Join("\n\n", items.Where(i => i.HasText).Select(i => i.Summary.Texts));
-        if (text.Length > 0) { Clipboard.SetText(text); Status = "Texte in die Zwischenablage kopiert"; }
-        else Status = "Keine Texte in der Auswahl";
+        if (text.Length > 0) { Clipboard.SetText(text); SetStatus(() => Loc.T("Vm_TextsCopied")); }
+        else SetStatus(() => Loc.T("Vm_NoTexts"));
     }
 
     // ---------- Ändern: Löschen und Tags ----------
@@ -620,13 +677,13 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         if (paths.Count == 0 || _index == null) return [];
         foreach (var p in paths)
             if (!ReadOnlyGuard.IsInside(p, _settings.SourceRoot))
-                throw new InvalidOperationException($"Datei liegt nicht im Snagit-Ordner: {p}");
+                throw new InvalidOperationException(Loc.F("Vm_NotInSource", p));
 
         if (ConfirmDelete)
         {
             var msg = paths.Count == 1
-                ? $"„{Path.GetFileName(paths[0])}“ in den Papierkorb verschieben?"
-                : $"{paths.Count} Captures in den Papierkorb verschieben?";
+                ? Loc.F("Vm_DeleteOne", Path.GetFileName(paths[0]))
+                : Loc.F("Vm_DeleteMany", paths.Count);
             if (!ConfirmDeleteDialog.Ask(owner, msg, out var dontAsk)) return [];
             if (dontAsk) ConfirmDelete = false;
         }
@@ -635,7 +692,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         try { gone = RecycleBin.Delete(paths, new System.Windows.Interop.WindowInteropHelper(owner).Handle); }
         catch (Exception ex)
         {
-            MessageBox.Show(owner, ex.Message, "Löschen", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show(owner, Loc.Error(ex), Loc.T("Common_Delete"), MessageBoxButton.OK, MessageBoxImage.Warning);
             return [];
         }
         foreach (var p in gone) _index.Remove(p);
@@ -644,8 +701,9 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         foreach (var item in _selected.Where(i => goneSet.Contains(i.Summary.Path)).ToList()) _selected.Remove(item);
         ReplaceItems(Items.Where(i => !goneSet.Contains(i.Summary.Path)).Select(i => i.Summary));
         AfterLibraryChanged();
-        Status = gone.Count == 1 ? $"„{Path.GetFileName(gone[0])}“ in den Papierkorb verschoben"
-                                 : $"{gone.Count} Captures in den Papierkorb verschoben";
+        var first = gone.Count > 0 ? Path.GetFileName(gone[0]) : "";
+        int goneCount = gone.Count;
+        SetStatus(() => goneCount == 1 ? Loc.F("Vm_DeletedOne", first) : Loc.F("Vm_DeletedMany", goneCount));
         return gone;
     }
 
@@ -683,7 +741,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         PreserveScroll = true;
         Items = list;
         PreserveScroll = false;
-        ResultText = $"{list.Count:N0} Treffer";
+        int count = list.Count;
+        SetResultText(() => Loc.F("Vm_Hits", count));
         UpdateSelectionText();
     }
 
@@ -711,7 +770,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Snagit Editor konnte nicht gestartet werden:\n{ex.Message}", "Snagit Browser",
+            MessageBox.Show(Loc.F("Vm_SnagitStartFailed", Loc.Error(ex)), AppInfo.Name,
                 MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
@@ -748,6 +807,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
     public void Dispose()
     {
+        Loc.LanguageChanged -= OnLanguageChanged;
         _scanCts?.Cancel();
         _index?.Dispose();
     }

@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:SnagitBrowser.App"
-        Title="Snagit Browser" Icon="pack://application:,,,/SnagitBrowser.App;component/app.ico" Height="850" Width="1400" WindowStartupLocation="CenterScreen"
+        Title="Snagit Browser" PreviewKeyDown="Window_PreviewKeyDown" Icon="pack://application:,,,/SnagitBrowser.App;component/app.ico" Height="850" Width="1400" WindowStartupLocation="CenterScreen"
         FontSize="13" UseLayoutRounding="True">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
@@ -38,27 +38,37 @@
             <DockPanel>
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                     <Button Margin="8,0,0,0" Padding="10,4" Click="EditTags_Click" Focusable="False"
-                            ToolTip="Tags für die ausgewählten Captures setzen oder entfernen (Strg+T)">
+                            ToolTip="{local:L Main_Tags_Tip}">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE8EC;" VerticalAlignment="Center" Margin="0,0,6,0" />
-                            <TextBlock Text="Tags …" />
+                            <TextBlock Text="{local:L Main_Tags}" />
                         </StackPanel>
                     </Button>
                     <Button Margin="8,0,0,0" Padding="10,4" Click="Delete_Click" Focusable="False"
-                            ToolTip="Ausgewählte Captures in den Papierkorb verschieben (Entf)">
+                            ToolTip="{local:L Main_Delete_Tip}">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE74D;" VerticalAlignment="Center" Margin="0,0,6,0" />
-                            <TextBlock Text="Löschen" />
+                            <TextBlock Text="{local:L Common_Delete}" />
                         </StackPanel>
                     </Button>
-                    <Button Content="Neu einlesen" Margin="8,0,0,0" Padding="10,4" Command="{Binding RescanCommand}" />
-                    <Button Content="Quellordner …" Margin="8,0,0,0" Padding="10,4" Command="{Binding ChooseSourceCommand}"
+                    <Button Content="{local:L Main_Rescan}" Margin="8,0,0,0" Padding="10,4" Command="{Binding RescanCommand}"
+                            ToolTip="{local:L Main_Rescan_Tip}" />
+                    <Button Content="{local:L Main_Source}" Margin="8,0,0,0" Padding="10,4" Command="{Binding ChooseSourceCommand}"
                             ToolTip="{Binding SourceRoot}" />
+                    <Button Margin="8,0,0,0" Padding="10,4" Click="Help_Click" Focusable="False" ToolTip="{local:L Main_Help_Tip}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE897;" VerticalAlignment="Center" Margin="0,0,6,0" />
+                            <TextBlock Text="{local:L Main_Help}" />
+                        </StackPanel>
+                    </Button>
+                    <ComboBox x:Name="LanguageBox" Margin="8,0,0,0" MinWidth="90" VerticalContentAlignment="Center" Focusable="False"
+                              ItemsSource="{Binding Languages}" DisplayMemberPath="Name" SelectedValuePath="Code"
+                              SelectedValue="{Binding UiLanguage}" ToolTip="{local:L Main_Language_Tip}" />
                 </StackPanel>
                 <TextBlock Text="🔍" VerticalAlignment="Center" Margin="0,0,6,0" FontSize="15" />
                 <TextBox x:Name="SearchBox" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
                          FontSize="15" Padding="4" VerticalContentAlignment="Center"
-                         ToolTip="Sucht in Texten, Tags, Fenstertitel, Anwendung, URL und Dateiname (Wortanfänge, alle Wörter müssen vorkommen)" />
+                         ToolTip="{local:L Main_Search_Tip}" />
             </DockPanel>
         </Border>
 
@@ -69,16 +79,16 @@
                     <StackPanel Orientation="Horizontal">
                         <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE8EC;" VerticalAlignment="Center" Margin="0,0,6,0" Foreground="#555" />
                         <TextBlock Text="{Binding TagBarHeader}" FontWeight="SemiBold" VerticalAlignment="Center" />
-                        <Button Content="× aufheben" Command="{Binding ClearTagFilterCommand}" Margin="10,0,0,0" Padding="6,0"
-                                Focusable="False" ToolTip="Tag-Filter aufheben"
+                        <Button Content="{local:L Main_TagBar_Clear}" Command="{Binding ClearTagFilterCommand}" Margin="10,0,0,0" Padding="6,0"
+                                Focusable="False" ToolTip="{local:L Main_TagBar_Clear_Tip}"
                                 Visibility="{Binding SelectedTag.Value, Converter={StaticResource NotNullToVis}}" />
                     </StackPanel>
                 </Expander.Header>
                 <DockPanel Margin="0,6,0,0">
                     <Grid DockPanel.Dock="Top" Width="240" HorizontalAlignment="Left" Margin="0,0,0,6">
                         <TextBox x:Name="TagSearchBox" Text="{Binding TagBarSearch, UpdateSourceTrigger=PropertyChanged}" Padding="3,2"
-                                 ToolTip="Tags in der Leiste filtern" />
-                        <TextBlock Text="Tags filtern …" Foreground="#999" Margin="6,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False"
+                                 ToolTip="{local:L Main_TagBar_Search_Tip}" />
+                        <TextBlock Text="{local:L Main_TagBar_Placeholder}" Foreground="#999" Margin="6,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False"
                                    Visibility="{Binding TagBarSearch, Converter={StaticResource EmptyToVis}}" />
                     </Grid>
                     <ScrollViewer MaxHeight="150" VerticalScrollBarVisibility="Auto" Focusable="False">
@@ -128,24 +138,24 @@
         <Border DockPanel.Dock="Left" Width="290" Padding="12,4,6,8" BorderBrush="#DDD" BorderThickness="0,0,1,0">
             <DockPanel>
                 <StackPanel DockPanel.Dock="Top">
-                    <TextBlock Style="{StaticResource Label}" Text="Anwendung" />
+                    <TextBlock Style="{StaticResource Label}" Text="{local:L Main_App}" />
                     <ComboBox ItemsSource="{Binding Apps}" SelectedItem="{Binding SelectedApp}" IsEditable="True" IsTextSearchEnabled="True"
                               TextSearch.TextPath="Label" />
 
-                    <TextBlock Style="{StaticResource Label}" Text="Anzahl Tags" />
+                    <TextBlock Style="{StaticResource Label}" Text="{local:L Main_TagCount}" />
                     <ComboBox ItemsSource="{Binding TagCounts}" SelectedItem="{Binding SelectedTagCount}" />
 
-                    <CheckBox Content="Nur mit Text/Notizen" IsChecked="{Binding OnlyWithText}" Margin="0,12,0,0" />
-                    <Button Content="Filter zurücksetzen" Margin="0,10,0,0" Padding="6,3" Command="{Binding ClearFiltersCommand}" />
-                    <CheckBox Content="Tags auf den Bildern anzeigen" IsChecked="{Binding ShowTileTags}" Margin="0,10,0,0" />
-                    <CheckBox Content="Vor dem Löschen nachfragen" IsChecked="{Binding ConfirmDelete}" Margin="0,6,0,0" />
+                    <CheckBox Content="{local:L Main_OnlyWithText}" IsChecked="{Binding OnlyWithText}" Margin="0,12,0,0" />
+                    <Button Content="{local:L Main_ClearFilters}" Margin="0,10,0,0" Padding="6,3" Command="{Binding ClearFiltersCommand}" />
+                    <CheckBox Content="{local:L Main_ShowTileTags}" IsChecked="{Binding ShowTileTags}" Margin="0,10,0,0" />
+                    <CheckBox Content="{local:L Main_ConfirmDelete}" IsChecked="{Binding ConfirmDelete}" Margin="0,6,0,0" />
 
                     <TextBlock Style="{StaticResource Label}">
-                        <Run Text="Vorschaugröße (Zeilenhöhe)" /><Run Text="{Binding RowHeight, StringFormat=' {0:0} px', Mode=OneWay}" FontWeight="Normal" />
+                        <Run Text="{local:L Main_RowHeight}" /><Run Text="{Binding RowHeight, StringFormat=' {0:0} px', Mode=OneWay}" FontWeight="Normal" />
                     </TextBlock>
                     <Slider Minimum="120" Maximum="1600" Value="{Binding RowHeight}" SmallChange="20" LargeChange="200" />
 
-                    <TextBlock Style="{StaticResource Label}" Text="Zeitraum" />
+                    <TextBlock Style="{StaticResource Label}" Text="{local:L Main_DateRange}" />
                 </StackPanel>
 
                 <TreeView x:Name="DateTreeView" ItemsSource="{Binding DateTree}" BorderThickness="0"
@@ -205,17 +215,17 @@
             </ItemsControl.ItemsPanel>
             <ItemsControl.ContextMenu>
                 <ContextMenu>
-                    <MenuItem Header="Öffnen" Click="Open_Click" FontWeight="Bold" />
-                    <MenuItem Header="Im Snagit Editor öffnen" Click="OpenInSnagit_Click" />
-                    <MenuItem Header="Tags bearbeiten …" InputGestureText="Strg+T" Click="EditTags_Click" />
-                    <MenuItem Header="Texte kopieren" Click="CopyTexts_Click" />
+                    <MenuItem Header="{local:L Menu_Open}" Click="Open_Click" FontWeight="Bold" />
+                    <MenuItem Header="{local:L Menu_OpenInSnagit}" Click="OpenInSnagit_Click" />
+                    <MenuItem Header="{local:L Menu_EditTags}" InputGestureText="{local:L Key_CtrlT}" Click="EditTags_Click" />
+                    <MenuItem Header="{local:L Common_CopyTexts}" Click="CopyTexts_Click" />
                     <Separator />
-                    <MenuItem Header="Bilder exportieren (PNG) …" Click="ExportImages_Click" />
-                    <MenuItem Header=".snagx-Dateien kopieren nach …" Click="CopyFiles_Click" />
+                    <MenuItem Header="{local:L Menu_ExportImages}" Click="ExportImages_Click" />
+                    <MenuItem Header="{local:L Menu_CopyFiles}" Click="CopyFiles_Click" />
                     <Separator />
-                    <MenuItem Header="Im Explorer anzeigen" Click="ShowInExplorer_Click" />
+                    <MenuItem Header="{local:L Common_ShowInExplorer}" Click="ShowInExplorer_Click" />
                     <Separator />
-                    <MenuItem Header="Löschen (Papierkorb)" InputGestureText="Entf" Click="Delete_Click" />
+                    <MenuItem Header="{local:L Menu_Delete}" InputGestureText="{local:L Key_Del}" Click="Delete_Click" />
                 </ContextMenu>
             </ItemsControl.ContextMenu>
             <ItemsControl.ItemTemplate>

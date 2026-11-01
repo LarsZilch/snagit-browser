@@ -66,5 +66,9 @@ Thumbs.db
 desktop.ini
 .DS_Store
 
+# Private Snagit-Testdateien (nur lokal; die Tests erzeugen eigene Testdaten)
+/Testdaten/
+/_Testdaten/
+
 # Claude Code lokale Einstellungen
 .claude/settings.local.json

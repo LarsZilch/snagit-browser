@@ -32,11 +32,11 @@ public sealed class IndexTests : IDisposable
     }
 
     [Theory]
-    [InlineData("Köferler", "24-06-2025_12-22-04")]
-    [InlineData("koferler", "24-06-2025_12-22-04")]   // ohne Umlaut
+    [InlineData("Müller", "24-06-2025_12-22-04")]
+    [InlineData("muller", "24-06-2025_12-22-04")]      // ohne Umlaut
     [InlineData("tick sl", "30-10-2026_13-53-44")]
-    [InlineData("Breako", "30-10-2026_08-54-50")]      // Präfixsuche
-    [InlineData("Berngau", "24-06-2025_12-22-04")]     // Tag
+    [InlineData("Breako", "30-10-2026_11-54-50")]      // Präfixsuche
+    [InlineData("Musterstadt", "24-06-2025_12-22-04")] // Tag
     public void FullTextSearch(string query, string expectedFile)
     {
         var hits = _index.Search(new CaptureQuery { Text = query });
@@ -47,8 +47,8 @@ public sealed class IndexTests : IDisposable
     public void FilterByAppAndTag()
     {
         Assert.All(_index.Search(new CaptureQuery { App = "NinjaTrader" }), h => Assert.Equal("NinjaTrader", h.AppName));
-        var tagged = _index.Search(new CaptureQuery { Tag = "A. Galle" });
-        Assert.Equal("Andre Galle", Assert.Single(tagged).FileName);
+        var tagged = _index.Search(new CaptureQuery { Tag = "M. Muster" });
+        Assert.Equal("Max Muster", Assert.Single(tagged).FileName);
         Assert.Contains(_index.GetTags(), t => t.Name == "FSV");
         Assert.Contains(_index.GetApps(), a => a.Name == "NinjaTrader");
     }
@@ -69,7 +69,7 @@ public sealed class IndexTests : IDisposable
         Assert.All(none, h => Assert.Empty(h.Tags));
 
         var three = _index.Search(new CaptureQuery { MinTags = 3, MaxTags = 3 });
-        Assert.Contains(three, h => h.FileName == "24-06-2025_12-22-04"); // FSV, Personen, Leute Berngau
+        Assert.Contains(three, h => h.FileName == "24-06-2025_12-22-04"); // FSV, Personen, Leute Musterstadt
         Assert.All(three, h => Assert.Equal(3, h.Tags.Count));
 
         var atLeastOne = _index.Search(new CaptureQuery { MinTags = 1 });
@@ -96,7 +96,7 @@ public sealed class IndexTests : IDisposable
     {
         var all = _index.Search(new CaptureQuery());
         Assert.Equal(2, all.Single(h => h.FileName == "30-10-2026_13-53-44").ObjectCount);
-        Assert.Equal(0, all.Single(h => h.FileName == "Andre Galle").ObjectCount);
+        Assert.Equal(0, all.Single(h => h.FileName == "Max Muster").ObjectCount);
     }
 
     [Fact]

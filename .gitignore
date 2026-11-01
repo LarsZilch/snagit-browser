@@ -1,0 +1,70 @@
+# Build-Ausgaben
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]64/
+[Ll]og/
+[Ll]ogs/
+artifacts/
+publish/
+*.pubxml.user
+
+# Visual Studio / Rider / VS Code
+.vs/
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.rsuser
+*.DotSettings.user
+_ReSharper*/
+
+# WPF temporäre Build-Projekte
+*_wpftmp.csproj
+
+# NuGet
+*.nupkg
+*.snupkg
+packages/
+!**/packages/build/
+project.lock.json
+*.nuget.props
+*.nuget.targets
+
+# Tests / Coverage
+TestResults/
+[Tt]est[Rr]esult*/
+coverage*.json
+coverage*.xml
+coverage*.info
+*.coverage
+*.coveragexml
+
+# Lokale Datenbanken / Index
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+
+# Sonstiges
+*.log
+*.tmp
+*.cache
+~$*
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Claude Code lokale Einstellungen
+.claude/settings.local.json

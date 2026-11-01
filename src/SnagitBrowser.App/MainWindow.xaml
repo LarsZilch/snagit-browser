@@ -1,0 +1,289 @@
+﻿<Window x:Class="SnagitBrowser.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:SnagitBrowser.App"
+        Title="Snagit Browser" Icon="pack://application:,,,/SnagitBrowser.App;component/app.ico" Height="850" Width="1400" WindowStartupLocation="CenterScreen"
+        FontSize="13" UseLayoutRounding="True">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+        <local:NotNullToVisibilityConverter x:Key="NotNullToVis" />
+        <local:EmptyToVisibilityConverter x:Key="EmptyToVis" />
+        <Style TargetType="TextBlock" x:Key="Label">
+            <Setter Property="Margin" Value="0,10,0,3" />
+            <Setter Property="Foreground" Value="#555" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+    </Window.Resources>
+
+    <DockPanel>
+        <!-- Statuszeile -->
+        <StatusBar DockPanel.Dock="Bottom">
+            <StatusBarItem>
+                <TextBlock FontWeight="SemiBold">
+                    <Run Text="{Binding ResultText, Mode=OneWay}" /><Run Text="  " /><Run Text="{Binding SelectionText, Mode=OneWay}" Foreground="#1E88E5" />
+                </TextBlock>
+            </StatusBarItem>
+            <Separator />
+            <StatusBarItem>
+                <TextBlock Text="{Binding Status}" />
+            </StatusBarItem>
+            <StatusBarItem HorizontalAlignment="Right">
+                <ProgressBar Width="200" Height="14" Value="{Binding ScanPercent}"
+                             Visibility="{Binding IsScanning, Converter={StaticResource BoolToVis}}" />
+            </StatusBarItem>
+        </StatusBar>
+
+        <!-- Suchleiste -->
+        <Border DockPanel.Dock="Top" Padding="10" Background="#F3F3F3" BorderBrush="#DDD" BorderThickness="0,0,0,1">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                    <Button Margin="8,0,0,0" Padding="10,4" Click="EditTags_Click" Focusable="False"
+                            ToolTip="Tags für die ausgewählten Captures setzen oder entfernen (Strg+T)">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE8EC;" VerticalAlignment="Center" Margin="0,0,6,0" />
+                            <TextBlock Text="Tags …" />
+                        </StackPanel>
+                    </Button>
+                    <Button Margin="8,0,0,0" Padding="10,4" Click="Delete_Click" Focusable="False"
+                            ToolTip="Ausgewählte Captures in den Papierkorb verschieben (Entf)">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE74D;" VerticalAlignment="Center" Margin="0,0,6,0" />
+                            <TextBlock Text="Löschen" />
+                        </StackPanel>
+                    </Button>
+                    <Button Content="Neu einlesen" Margin="8,0,0,0" Padding="10,4" Command="{Binding RescanCommand}" />
+                    <Button Content="Quellordner …" Margin="8,0,0,0" Padding="10,4" Command="{Binding ChooseSourceCommand}"
+                            ToolTip="{Binding SourceRoot}" />
+                </StackPanel>
+                <TextBlock Text="🔍" VerticalAlignment="Center" Margin="0,0,6,0" FontSize="15" />
+                <TextBox x:Name="SearchBox" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                         FontSize="15" Padding="4" VerticalContentAlignment="Center"
+                         ToolTip="Sucht in Texten, Tags, Fenstertitel, Anwendung, URL und Dateiname (Wortanfänge, alle Wörter müssen vorkommen)" />
+            </DockPanel>
+        </Border>
+
+        <!-- Tag-Leiste: alle Tags als Buttons, höchstens einer aktiv (erneuter Klick hebt die Auswahl auf) -->
+        <Border DockPanel.Dock="Top" Background="#FAFAFA" BorderBrush="#DDD" BorderThickness="0,0,0,1" Padding="10,4,10,6">
+            <Expander IsExpanded="{Binding TagBarExpanded}">
+                <Expander.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE8EC;" VerticalAlignment="Center" Margin="0,0,6,0" Foreground="#555" />
+                        <TextBlock Text="{Binding TagBarHeader}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                        <Button Content="× aufheben" Command="{Binding ClearTagFilterCommand}" Margin="10,0,0,0" Padding="6,0"
+                                Focusable="False" ToolTip="Tag-Filter aufheben"
+                                Visibility="{Binding SelectedTag.Value, Converter={StaticResource NotNullToVis}}" />
+                    </StackPanel>
+                </Expander.Header>
+                <DockPanel Margin="0,6,0,0">
+                    <Grid DockPanel.Dock="Top" Width="240" HorizontalAlignment="Left" Margin="0,0,0,6">
+                        <TextBox x:Name="TagSearchBox" Text="{Binding TagBarSearch, UpdateSourceTrigger=PropertyChanged}" Padding="3,2"
+                                 ToolTip="Tags in der Leiste filtern" />
+                        <TextBlock Text="Tags filtern …" Foreground="#999" Margin="6,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False"
+                                   Visibility="{Binding TagBarSearch, Converter={StaticResource EmptyToVis}}" />
+                    </Grid>
+                    <ScrollViewer MaxHeight="150" VerticalScrollBarVisibility="Auto" Focusable="False">
+                        <ItemsControl ItemsSource="{Binding TagButtons}" Focusable="False">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type local:TagButton}">
+                                    <ToggleButton x:Name="Btn" IsChecked="{Binding IsSelected, Mode=OneWay}" Tag="{Binding Name}"
+                                                  Click="TagFilterButton_Click" Focusable="False" Cursor="Hand"
+                                                  Margin="0,0,5,5" Padding="9,3" FontSize="12"
+                                                  Visibility="{Binding IsVisible, Converter={StaticResource BoolToVis}}">
+                                        <ToggleButton.Template>
+                                            <ControlTemplate TargetType="ToggleButton">
+                                                <Border x:Name="Bd" Background="White" BorderBrush="#BDBDBD" BorderThickness="1" CornerRadius="12"
+                                                        Padding="{TemplateBinding Padding}">
+                                                    <ContentPresenter />
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="Bd" Property="Background" Value="#E5F1FB" />
+                                                        <Setter TargetName="Bd" Property="BorderBrush" Value="#1E88E5" />
+                                                    </Trigger>
+                                                    <Trigger Property="IsChecked" Value="True">
+                                                        <Setter TargetName="Bd" Property="Background" Value="#1E88E5" />
+                                                        <Setter TargetName="Bd" Property="BorderBrush" Value="#1565C0" />
+                                                        <Setter Property="Foreground" Value="White" />
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </ToggleButton.Template>
+                                        <TextBlock>
+                                            <Run Text="{Binding Name, Mode=OneWay}" FontWeight="SemiBold" />
+                                            <Run Text="{Binding Count, Mode=OneWay, StringFormat=' {0:N0}'}" Foreground="#888" />
+                                        </TextBlock>
+                                    </ToggleButton>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </DockPanel>
+            </Expander>
+        </Border>
+
+        <!-- Filter links -->
+        <Border DockPanel.Dock="Left" Width="290" Padding="12,4,6,8" BorderBrush="#DDD" BorderThickness="0,0,1,0">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Top">
+                    <TextBlock Style="{StaticResource Label}" Text="Anwendung" />
+                    <ComboBox ItemsSource="{Binding Apps}" SelectedItem="{Binding SelectedApp}" IsEditable="True" IsTextSearchEnabled="True"
+                              TextSearch.TextPath="Label" />
+
+                    <TextBlock Style="{StaticResource Label}" Text="Anzahl Tags" />
+                    <ComboBox ItemsSource="{Binding TagCounts}" SelectedItem="{Binding SelectedTagCount}" />
+
+                    <CheckBox Content="Nur mit Text/Notizen" IsChecked="{Binding OnlyWithText}" Margin="0,12,0,0" />
+                    <Button Content="Filter zurücksetzen" Margin="0,10,0,0" Padding="6,3" Command="{Binding ClearFiltersCommand}" />
+                    <CheckBox Content="Tags auf den Bildern anzeigen" IsChecked="{Binding ShowTileTags}" Margin="0,10,0,0" />
+                    <CheckBox Content="Vor dem Löschen nachfragen" IsChecked="{Binding ConfirmDelete}" Margin="0,6,0,0" />
+
+                    <TextBlock Style="{StaticResource Label}">
+                        <Run Text="Vorschaugröße (Zeilenhöhe)" /><Run Text="{Binding RowHeight, StringFormat=' {0:0} px', Mode=OneWay}" FontWeight="Normal" />
+                    </TextBlock>
+                    <Slider Minimum="120" Maximum="1600" Value="{Binding RowHeight}" SmallChange="20" LargeChange="200" />
+
+                    <TextBlock Style="{StaticResource Label}" Text="Zeitraum" />
+                </StackPanel>
+
+                <TreeView x:Name="DateTreeView" ItemsSource="{Binding DateTree}" BorderThickness="0"
+                          SelectedItemChanged="DateTree_SelectedItemChanged"
+                          VirtualizingPanel.IsVirtualizing="True">
+                    <TreeView.ItemContainerStyle>
+                        <Style TargetType="TreeViewItem">
+                            <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                            <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                            <Setter Property="Padding" Value="2,3" />
+                        </Style>
+                    </TreeView.ItemContainerStyle>
+                    <TreeView.ItemTemplate>
+                        <HierarchicalDataTemplate DataType="{x:Type local:DateNode}" ItemsSource="{Binding Children}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{Binding Icon}" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                           VerticalAlignment="Center" Margin="0,0,6,0" Foreground="#555" />
+                                <TextBlock Grid.Column="1" Text="{Binding Label}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Grid.Column="2" Text="{Binding Count, StringFormat=N0}" Margin="12,0,4,0"
+                                           VerticalAlignment="Center" Foreground="#666" />
+                            </Grid>
+                        </HierarchicalDataTemplate>
+                    </TreeView.ItemTemplate>
+                </TreeView>
+            </DockPanel>
+        </Border>
+
+        <!-- Galerie -->
+        <!-- Zeilen-Layout: jede Zeile füllt die Breite, Bilder behalten ihr Seitenverhältnis.
+             Virtualisiert werden ganze Zeilen; nur sichtbare Zeilen existieren als Steuerelemente. -->
+        <ItemsControl x:Name="Gallery" ItemsSource="{Binding Rows}" Focusable="True" FocusVisualStyle="{x:Null}"
+                      Padding="6,6,0,6" Background="White"
+                      VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"
+                      VirtualizingPanel.ScrollUnit="Pixel" ScrollViewer.CanContentScroll="True"
+                      SizeChanged="Gallery_SizeChanged" PreviewKeyDown="Gallery_KeyDown"
+                      PreviewMouseWheel="Gallery_PreviewMouseWheel"
+                      ToolTipService.ToolTip="{x:Null}">
+            <ItemsControl.Template>
+                <ControlTemplate TargetType="ItemsControl">
+                    <ScrollViewer x:Name="PART_Scroll" Focusable="False" CanContentScroll="True"
+                                  HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Visible"
+                                  Padding="{TemplateBinding Padding}" Background="{TemplateBinding Background}">
+                        <ItemsPresenter />
+                    </ScrollViewer>
+                </ControlTemplate>
+            </ItemsControl.Template>
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <VirtualizingStackPanel />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Öffnen" Click="Open_Click" FontWeight="Bold" />
+                    <MenuItem Header="Im Snagit Editor öffnen" Click="OpenInSnagit_Click" />
+                    <MenuItem Header="Tags bearbeiten …" InputGestureText="Strg+T" Click="EditTags_Click" />
+                    <MenuItem Header="Texte kopieren" Click="CopyTexts_Click" />
+                    <Separator />
+                    <MenuItem Header="Bilder exportieren (PNG) …" Click="ExportImages_Click" />
+                    <MenuItem Header=".snagx-Dateien kopieren nach …" Click="CopyFiles_Click" />
+                    <Separator />
+                    <MenuItem Header="Im Explorer anzeigen" Click="ShowInExplorer_Click" />
+                    <Separator />
+                    <MenuItem Header="Löschen (Papierkorb)" InputGestureText="Entf" Click="Delete_Click" />
+                </ContextMenu>
+            </ItemsControl.ContextMenu>
+            <ItemsControl.ItemTemplate>
+                <!-- Eine Zeile -->
+                <DataTemplate DataType="{x:Type local:GalleryRow}">
+                    <ItemsControl ItemsSource="{Binding Items}" Height="{Binding Height}" Margin="0,0,0,6" Focusable="False">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <!-- Eine Kachel -->
+                            <DataTemplate DataType="{x:Type local:CaptureItem}">
+                                <Grid x:Name="Tile" Width="{Binding DisplayWidth}" Height="{Binding DisplayHeight}" Margin="0,0,6,0"
+                                      Background="#EEE" ToolTip="{Binding ToolTip}" Cursor="Hand"
+                                      MouseLeftButtonDown="Tile_MouseLeftButtonDown" MouseRightButtonDown="Tile_MouseRightButtonDown">
+                                    <Image Source="{Binding Thumbnail}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
+
+                                    <!-- Optional: vergebene Tags oben links auf dem Bild -->
+                                    <ItemsControl ItemsSource="{Binding Summary.Tags}" VerticalAlignment="Top" HorizontalAlignment="Left"
+                                                  Margin="4,4,30,0" IsHitTestVisible="False" ClipToBounds="True"
+                                                  MaxHeight="{Binding DisplayHeight}"
+                                                  Visibility="{Binding DataContext.ShowTileTags, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Background="#D01565C0" CornerRadius="9" Padding="7,1,7,2" Margin="0,0,4,4">
+                                                    <TextBlock Text="{Binding}" Foreground="White" FontSize="11" FontWeight="SemiBold" />
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
+                                    <Border HorizontalAlignment="Right" VerticalAlignment="Top" Margin="5" Padding="4,1"
+                                            Background="#CC1E88E5" CornerRadius="3"
+                                            Visibility="{Binding HasText, Converter={StaticResource BoolToVis}}">
+                                        <TextBlock Text="T" Foreground="White" FontWeight="Bold" FontSize="11" />
+                                    </Border>
+
+                                    <!-- Infos erscheinen beim Überfahren mit der Maus -->
+                                    <Border x:Name="Overlay" VerticalAlignment="Bottom" Background="#B0000000" Padding="8,5" Visibility="Collapsed">
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Title}" Foreground="White" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Foreground="#DDD" FontSize="11" TextTrimming="CharacterEllipsis">
+                                                <Run Text="{Binding DateText, Mode=OneWay}" /><Run Text=" · " /><Run Text="{Binding Summary.AppName, Mode=OneWay}" />
+                                                <Run Text="  " /><Run Text="{Binding TagsText, Mode=OneWay}" Foreground="#8CC8FF" />
+                                            </TextBlock>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <Border x:Name="SelectionFrame" BorderBrush="#1E88E5" BorderThickness="4" Visibility="Collapsed" />
+                                </Grid>
+                                <DataTemplate.Triggers>
+                                    <Trigger SourceName="Tile" Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="Overlay" Property="Visibility" Value="Visible" />
+                                    </Trigger>
+                                    <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                        <Setter TargetName="SelectionFrame" Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </DataTemplate.Triggers>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </DockPanel>
+</Window>

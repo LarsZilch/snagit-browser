@@ -96,6 +96,44 @@ public sealed class WriterTests : IDisposable
     }
 
     [Fact]
+    public void ReplaceTagsInsertsMissingEntryAlphabetically()
+    {
+        const string json = "{\r\n   \"AppName\" : \"Edge\",\r\n   \"OperatingSystemVersion\" : \"Win\",\r\n   \"Version\" : \"1.0\",\r\n   \"WindowName\" : \"x\"\r\n}";
+        var result = SnagxWriter.ReplaceTags(json, ["MeinTag"]);
+        Assert.Equal("{\r\n   \"AppName\" : \"Edge\",\r\n   \"OperatingSystemVersion\" : \"Win\",\r\n   \"Tags\" : [ \"MeinTag\" ],\r\n   \"Version\" : \"1.0\",\r\n   \"WindowName\" : \"x\"\r\n}", result);
+    }
+
+    [Fact]
+    public void ReplaceTagsAppendsWhenTagsSortsLast()
+    {
+        const string json = "{\n   \"AppName\" : \"Edge\",\n   \"CaptureDate\" : \"2026\"\n}\n";
+        var result = SnagxWriter.ReplaceTags(json, []);
+        Assert.Equal("{\n   \"AppName\" : \"Edge\",\n   \"CaptureDate\" : \"2026\",\n   \"Tags\" : []\n}\n", result);
+    }
+
+    [Fact]
+    public void SetTagsOnNeverTaggedFile()
+    {
+        var path = Path.Combine(_lib, "untagged.snagx");
+        File.Copy(AnyFile, path);
+        // metadata.json ohne Tags-Eintrag erzeugen (wie bei nie getaggten Snagit-Aufnahmen)
+        using (var zip = ZipFile.Open(path, ZipArchiveMode.Update))
+        {
+            var e = zip.GetEntry("metadata.json")!;
+            string json;
+            using (var r = new StreamReader(e.Open())) json = r.ReadToEnd();
+            json = System.Text.RegularExpressions.Regex.Replace(json, "\\r?\\n   \"Tags\"\\s*:\\s*\\[[^\\]]*\\],?", "");
+            using var s = e.Open();
+            s.SetLength(0);
+            s.Write(new UTF8Encoding(false).GetBytes(json));
+        }
+        Assert.Empty(SnagxReader.Read(path).Metadata.Tags);
+
+        SnagxWriter.SetTags(path, ["MeinTag"], FileStamp.Of(path), _backups);
+        Assert.Equal(["MeinTag"], SnagxReader.Read(path).Metadata.Tags);
+    }
+
+    [Fact]
     public void NormalizeRemovesDuplicatesAndBlanks() =>
         Assert.Equal(["a", "B"], SnagxWriter.NormalizeTags([" a ", "", "B", "A", "b "]));
 

@@ -4,15 +4,8 @@ namespace SnagitBrowser.Tests;
 
 public class CoreTests
 {
-    internal static string TestDataDir
-    {
-        get
-        {
-            var dir = new DirectoryInfo(AppContext.BaseDirectory);
-            while (dir != null && !Directory.Exists(Path.Combine(dir.FullName, "Testdaten"))) dir = dir.Parent;
-            return Path.Combine(dir?.FullName ?? throw new DirectoryNotFoundException("Testdaten"), "Testdaten");
-        }
-    }
+    /// <summary>Erzeugte Testbibliothek mit erfundenen Inhalten (siehe <see cref="TestLibrary"/>).</summary>
+    internal static string TestDataDir => TestLibrary.Directory;
 
     private static string File(string name) => Path.Combine(TestDataDir, name);
 
@@ -53,10 +46,10 @@ public class CoreTests
     public void ReadsTagsAndUmlauts()
     {
         var doc = SnagxReader.Read(File("24-06-2025_12-22-04.snagx"));
-        Assert.Equal(["FSV", "Personen", "Leute Berngau"], doc.Metadata.Tags);
-        Assert.Contains("Ludwig Köferler", doc.Texts);
-        Assert.Contains("Albert Grübler", doc.Texts);
-        Assert.Contains("Köferler", doc.Metadata.WindowName);
+        Assert.Equal(["FSV", "Personen", "Leute Musterstadt"], doc.Metadata.Tags);
+        Assert.Contains("Jürgen Müller", doc.Texts);
+        Assert.Contains("Käthe Großmann", doc.Texts);
+        Assert.Contains("Müller", doc.Metadata.WindowName);
     }
 
     [Fact]
@@ -96,7 +89,7 @@ public class CoreTests
         Assert.Throws<InvalidOperationException>(() => ReadOnlyGuard.EnsureOutside(root + "\\", root));
         Assert.Throws<InvalidOperationException>(() => ReadOnlyGuard.EnsureOutside(Path.Combine(root, "sub", "..", "y"), root));
         Assert.Throws<InvalidOperationException>(() => Exporter.WriteBytes(Path.Combine(root, "x.png"), [1], root));
-        Assert.Throws<InvalidOperationException>(() => Exporter.CopyFiles([File("Andre Galle.snagx")], root, root));
+        Assert.Throws<InvalidOperationException>(() => Exporter.CopyFiles([File("Max Muster.snagx")], root, root));
         // Ähnlich benannter Nachbarordner ist erlaubt
         ReadOnlyGuard.EnsureOutside(root + "Export", root);
         Assert.False(System.IO.File.Exists(Path.Combine(root, "x.png")));

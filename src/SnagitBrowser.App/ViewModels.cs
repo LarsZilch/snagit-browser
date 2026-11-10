@@ -614,7 +614,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private async Task ChooseSourceAsync()
     {
-        var dlg = new OpenFolderDialog { Title = Loc.T("Vm_ChooseSource"), InitialDirectory = _settings.SourceRoot };
+        var dlg = new OpenFolderDialog { Title = Loc.T("Vm_ChooseSource") };
+        if (Directory.Exists(_settings.SourceRoot)) dlg.InitialDirectory = _settings.SourceRoot;
         if (dlg.ShowDialog() != true) return;
         _scanCts?.Cancel();
         _settings.SourceRoot = dlg.FolderName;

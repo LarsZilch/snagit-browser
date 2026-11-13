@@ -135,7 +135,8 @@
         </Border>
 
         <!-- Filter links -->
-        <Border DockPanel.Dock="Left" Width="290" Padding="12,4,6,8" BorderBrush="#DDD" BorderThickness="0,0,1,0">
+        <Border DockPanel.Dock="Left" Width="290" Padding="12,4,6,8"
+                Visibility="{Binding SidebarExpanded, Converter={StaticResource BoolToVis}}">
             <DockPanel>
                 <StackPanel DockPanel.Dock="Top">
                     <TextBlock Style="{StaticResource Label}" Text="{local:L Main_App}" />
@@ -188,6 +189,28 @@
                 </TreeView>
             </DockPanel>
         </Border>
+
+        <!-- Schmale Leiste zum Ein-/Ausklappen der Seitenleiste -->
+        <ToggleButton DockPanel.Dock="Left" Width="20" IsChecked="{Binding SidebarExpanded}" Focusable="False" Cursor="Hand"
+                      ToolTip="{local:L Main_Sidebar_Toggle_Tip}">
+            <ToggleButton.Template>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Border x:Name="Bd" Background="#E6E6E6" BorderBrush="#BDBDBD" BorderThickness="1,0,1,0">
+                        <TextBlock x:Name="Glyph" FontFamily="Segoe MDL2 Assets" FontSize="13" FontWeight="Bold" Text="&#xE76C;" Foreground="#333"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Glyph" Property="Text" Value="&#xE76B;" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="#1E88E5" />
+                            <Setter TargetName="Glyph" Property="Foreground" Value="White" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </ToggleButton.Template>
+        </ToggleButton>
 
         <!-- Galerie -->
         <!-- Zeilen-Layout: jede Zeile füllt die Breite, Bilder behalten ihr Seitenverhältnis.

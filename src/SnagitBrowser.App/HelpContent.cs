@@ -25,6 +25,7 @@ public static class HelpContent
         - Beim Überfahren mit der Maus erscheinen Fenstertitel, Datum, Anwendung und Tags; der Tooltip zeigt zusätzlich den Anfang der Texte.
         - Ein blaues **T** oben rechts bedeutet: Das Capture enthält Texte oder Notizen.
         - **Tags auf den Bildern anzeigen** blendet die Tags direkt auf den Kacheln ein.
+        - Die **Seitenleiste** links lässt sich über den schmalen Streifen an ihrem Rand ein- und ausklappen; die Galerie nutzt dann die volle Breite.
         - Die neuesten Captures stehen oben. Die Statuszeile zeigt Trefferzahl, Auswahl und die letzte Meldung.
 
         # 3. Suche und Filter
@@ -145,6 +146,7 @@ public static class HelpContent
         - Hovering shows window title, date, application and tags; the tooltip also shows the beginning of the texts.
         - A blue **T** in the top right corner means the capture contains texts or notes.
         - **Show tags on the images** displays the tags directly on the tiles.
+        - The **sidebar** on the left can be collapsed and expanded with the narrow strip at its edge; the gallery then uses the full width.
         - The newest captures are at the top. The status bar shows the number of results, the selection and the last message.
 
         # 3. Search and filters

@@ -47,6 +47,7 @@ Der **Snagit Browser** ist eine Windows-Anwendung (WPF, .NET 9) zum schnellen Du
   - Tooltip mit Dateiname, Anwendung, Fenster, Tags und den ersten 400 Zeichen der Texte
   - Blaues **„T“**-Symbol, wenn das Capture Texte/Notizen enthält
   - Optional: Tags direkt auf dem Bild (*Tags auf den Bildern anzeigen*)
+- **Einklappbare Seitenleiste** – der schmale Streifen am Rand der Filterleiste klappt sie ein und aus; der Zustand wird gespeichert.
 - **Sortierung** – Neueste Captures zuerst.
 - **Statuszeile** – Anzahl Treffer, Anzahl ausgewählter Captures und aktuelle Statusmeldung.
 
@@ -197,7 +198,7 @@ Alle Daten liegen unter `%LOCALAPPDATA%\SnagitBrowser\`:
 **Sprache, Hilfe und Version:**
 - Die Oberfläche gibt es auf **Deutsch** (Standard) und **Englisch**. Umgeschaltet wird oben rechts; die Änderung wirkt sofort ohne Neustart und wird gespeichert. Auch Meldungen und Fehlermeldungen erscheinen in der gewählten Sprache.
 - **Hilfe** (Button oben rechts oder **F1**) öffnet eine Funktionsübersicht in der gewählten Sprache.
-- Die Versionsnummer steht im Fenstertitel (z. B. „Snagit Browser 1.0“) und in der Hilfe. Sie wird zentral in `Directory.Build.props` gepflegt.
+- Die Versionsnummer steht im Fenstertitel (z. B. „Snagit Browser 1.1“) und in der Hilfe. Sie wird zentral in `Directory.Build.props` gepflegt.
 
 **Gespeicherte Einstellungen:**
 - Sprache der Oberfläche

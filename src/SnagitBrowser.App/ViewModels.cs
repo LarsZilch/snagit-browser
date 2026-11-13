@@ -267,6 +267,12 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         set { if (_settings.TagBarExpanded == value) return; _settings.TagBarExpanded = value; _settings.Save(); OnPropertyChanged(); }
     }
 
+    public bool SidebarExpanded
+    {
+        get => _settings.SidebarExpanded;
+        set { if (_settings.SidebarExpanded == value) return; _settings.SidebarExpanded = value; _settings.Save(); OnPropertyChanged(); }
+    }
+
     public string TagBarHeader => SelectedTag?.Value is { } t ? Loc.F("Main_TagBar_Header", t) : Loc.T("Main_TagBar_None");
 
     /// <summary>Klick auf einen Tag-Button: auswählen bzw. bei erneutem Klick wieder abwählen.</summary>

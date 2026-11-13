@@ -63,6 +63,7 @@ public static class Strings
         ["Main_ConfirmDelete"] = ("Vor dem Löschen nachfragen", "Ask before deleting"),
         ["Main_RowHeight"] = ("Vorschaugröße (Zeilenhöhe)", "Thumbnail size (row height)"),
         ["Main_DateRange"] = ("Zeitraum", "Date range"),
+        ["Main_Sidebar_Toggle_Tip"] = ("Seitenleiste ein-/ausklappen", "Collapse/expand the sidebar"),
         ["Main_SelectFirst"] = ("Bitte zuerst ein oder mehrere Bilder auswählen (Klick, Strg+Klick, Umschalt+Klick).",
                                 "Please select one or more images first (click, Ctrl+click, Shift+click)."),
         ["Menu_Open"] = ("Öffnen", "Open"),

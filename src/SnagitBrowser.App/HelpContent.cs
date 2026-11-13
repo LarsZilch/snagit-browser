@@ -12,7 +12,7 @@ public static class HelpContent
         Der **Snagit Browser** durchsucht, filtert und verwaltet eine Snagit-Bibliothek (`.snagx`-Dateien). Er liest die Dateien direkt aus dem Snagit-Ordner, baut einen lokalen Suchindex auf und zeigt alle Captures in einer Galerie. Der Snagit-Ordner wird nur gelesen – ausgenommen sind nur das Ändern von Tags und das Löschen in den Papierkorb.
 
         # 1. Bibliothek und Index
-        - **Quellordner …** legt den Snagit-Bibliotheksordner fest (Standard: `S:\AppData\Snagit`). Alle Unterordner werden nach `.snagx`-Dateien durchsucht.
+        - **Quellordner …** legt den Snagit-Bibliotheksordner fest (Standard: `Dokumente\Snagit`). Alle Unterordner werden nach `.snagx`-Dateien durchsucht.
         - Metadaten und Texte landen in einem lokalen Suchindex (SQLite mit Volltextsuche). Pro Quellordner gibt es eine eigene Index-Datei.
         - Beim Start und über **Neu einlesen** werden nur neue oder geänderte Dateien gelesen. Gelöschte Dateien verschwinden aus dem Index.
         - Die Statuszeile zeigt den Fortschritt und am Ende eine Zusammenfassung (neu, geändert, entfernt, nicht lesbar, Dauer).
@@ -133,7 +133,7 @@ public static class HelpContent
         **Snagit Browser** searches, filters and manages a Snagit library (`.snagx` files). It reads the files directly from the Snagit folder, builds a local search index and shows all captures in a gallery. The Snagit folder is only read – the only exceptions are changing tags and deleting to the Recycle Bin.
 
         # 1. Library and index
-        - **Source folder …** sets the Snagit library folder (default: `S:\AppData\Snagit`). All subfolders are searched for `.snagx` files.
+        - **Source folder …** sets the Snagit library folder (default: `Documents\Snagit`). All subfolders are searched for `.snagx` files.
         - Metadata and texts are stored in a local search index (SQLite with full-text search). Each source folder has its own index file.
         - At startup and via **Rescan**, only new or changed files are read. Deleted files disappear from the index.
         - The status bar shows the progress and, at the end, a summary (new, changed, removed, unreadable, duration).

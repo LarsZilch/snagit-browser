@@ -6,7 +6,8 @@ namespace SnagitBrowser.App;
 
 public sealed class AppSettings
 {
-    public string SourceRoot { get; set; } = @"S:\AppData\Snagit";
+    public string SourceRoot { get; set; } = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Snagit");
     public string? LastExportDir { get; set; }
     /// <summary>Vor dem Löschen nachfragen (abschaltbar im Dialog).</summary>
     public bool ConfirmDelete { get; set; } = true;
